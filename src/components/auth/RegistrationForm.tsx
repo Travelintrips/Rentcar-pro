@@ -7,6 +7,12 @@ import { supabase } from "@/lib/supabase";
 import SelfieCapture from "./SelfieCapture";
 import { uploadDocumentImages } from "@/lib/edgeFunctions";
 
+// Import role-specific form components
+import CustomerForm from "./forms/CustomerForm";
+import DriverForm from "./forms/DriverForm";
+import DriverMitraForm from "./forms/DriverMitraForm";
+import StaffForm from "./forms/StaffForm";
+
 import {
   Form,
   FormControl,
@@ -38,6 +44,12 @@ const registerSchema = z
     role: z.string().min(1, { message: "Please select a role" }),
     selfieImage: z.string().optional(),
     // Driver fields (common)
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+    address: z.string().optional(),
+    birthPlace: z.string().optional(),
+    birthDate: z.string().optional(),
+    religion: z.string().optional(),
     licenseNumber: z.string().optional(),
     licenseExpiry: z.string().optional(),
     referencePhone: z.string().optional(),
@@ -67,30 +79,39 @@ const registerSchema = z
   })
   .refine(
     (data) => {
-      // If role is Driver, require license number, expiry, and reference phone
+      // If role is Driver, require personal information and license details
       if (data.role === "Driver Mitra" || data.role === "Driver Perusahaan") {
         return (
-          !!data.licenseNumber && !!data.licenseExpiry && !!data.referencePhone
+          !!data.firstName &&
+          !!data.lastName &&
+          !!data.address &&
+          !!data.birthPlace &&
+          !!data.birthDate &&
+          !!data.religion &&
+          !!data.licenseNumber &&
+          !!data.licenseExpiry &&
+          !!data.referencePhone
         );
       }
       return true;
     },
     {
       message:
-        "License number, expiry date, and reference phone are required for drivers",
-      path: ["licenseNumber"],
+        "All personal information and license details are required for drivers",
+      path: ["firstName"],
     },
   )
   .refine(
     (data) => {
-      // If role is Driver Perusahaan, require SKCK
+      // If role is Driver Perusahaan, require SKCK, KK, and STNK
       if (data.role === "Driver Perusahaan") {
-        return !!data.skckImage;
+        return !!data.skckImage && !!data.kkImage && !!data.stnkImage;
       }
       return true;
     },
     {
-      message: "SKCK document is required for Driver Perusahaan",
+      message:
+        "SKCK, KK, and STNK documents are required for Driver Perusahaan",
       path: ["skckImage"],
     },
   )
@@ -158,6 +179,8 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({
     ktp: "",
     sim: "",
     skck: "",
+    kk: "",
+    stnk: "",
     idCard: "",
   });
 
@@ -170,6 +193,12 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({
       phone: "",
       role: initialRole || "Customer",
       selfieImage: "",
+      firstName: "",
+      lastName: "",
+      address: "",
+      birthPlace: "",
+      birthDate: "",
+      religion: "",
       licenseNumber: "",
       licenseExpiry: "",
       referencePhone: "",
@@ -269,6 +298,20 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({
                   }));
                   registerForm.setValue("skckImage", driverData.skck_url);
                 }
+                if (driverData.kk_url) {
+                  setExistingImages((prev) => ({
+                    ...prev,
+                    kk: driverData.kk_url,
+                  }));
+                  registerForm.setValue("kkImage", driverData.kk_url);
+                }
+                if (driverData.stnk_url) {
+                  setExistingImages((prev) => ({
+                    ...prev,
+                    stnk: driverData.stnk_url,
+                  }));
+                  registerForm.setValue("stnkImage", driverData.stnk_url);
+                }
               }
             } else if (userRole === "Staff") {
               const { data: staffData, error: staffError } = await supabase
@@ -324,9 +367,42 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({
         setIsSubmitting(false);
         return;
       }
+      if (!data.kkImage) {
+        setRegisterError("Please upload your KK (Family Card)");
+        setIsSubmitting(false);
+        return;
+      }
+      if (!data.stnkImage) {
+        setRegisterError("Please upload your STNK (Vehicle Registration)");
+        setIsSubmitting(false);
+        return;
+      }
+      // Additional validation for Driver Mitra
+      if (data.role === "Driver Mitra") {
+        if (!data.make || !data.model || !data.license_plate) {
+          setRegisterError("Please complete all vehicle information");
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      // Additional validation for Driver Perusahaan
+      if (data.role === "Driver Perusahaan") {
+        if (!data.skckImage) {
+          setRegisterError(
+            "Please upload your SKCK (Police Clearance Certificate)",
+          );
+          setIsSubmitting(false);
+          return;
+        }
+      }
     } else if (data.role === "Staff") {
       if (!data.idCardImage) {
         setRegisterError("Please upload your ID Card");
+        setIsSubmitting(false);
+        return;
+      }
+      if (!data.department || !data.position || !data.employeeId) {
+        setRegisterError("Please complete all staff information");
         setIsSubmitting(false);
         return;
       }
@@ -457,6 +533,12 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({
                     value !== "Driver Mitra" &&
                     value !== "Driver Perusahaan"
                   ) {
+                    registerForm.setValue("firstName", "");
+                    registerForm.setValue("lastName", "");
+                    registerForm.setValue("address", "");
+                    registerForm.setValue("birthPlace", "");
+                    registerForm.setValue("birthDate", "");
+                    registerForm.setValue("religion", "");
                     registerForm.setValue("licenseNumber", "");
                     registerForm.setValue("licenseExpiry", "");
                     registerForm.setValue("referencePhone", "");
@@ -465,6 +547,11 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({
                   }
                   if (value !== "Driver Perusahaan") {
                     registerForm.setValue("skckImage", "");
+                    // If not Driver Perusahaan or Driver Mitra, clear KK and STNK
+                    if (value !== "Driver Mitra") {
+                      registerForm.setValue("kkImage", "");
+                      registerForm.setValue("stnkImage", "");
+                    }
                   }
                   if (value !== "Driver Mitra") {
                     registerForm.setValue("color", "");
@@ -510,579 +597,36 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({
         />
 
         {/* Role-specific fields */}
+        {registerForm.watch("role") === "Customer" && (
+          <CustomerForm control={registerForm.control} />
+        )}
+
         {(registerForm.watch("role") === "Driver Mitra" ||
           registerForm.watch("role") === "Driver Perusahaan") && (
-          <div className="space-y-4 border p-4 rounded-md bg-muted/30">
-            <h3 className="font-medium">Driver Information</h3>
+          <DriverForm
+            control={registerForm.control}
+            watch={registerForm.watch}
+            setValue={registerForm.setValue}
+            existingImages={existingImages}
+          />
+        )}
 
-            <FormField
-              control={registerForm.control}
-              name="licenseNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>License Number (SIM)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter license number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={registerForm.control}
-              name="licenseExpiry"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>License Expiry Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={registerForm.control}
-              name="referencePhone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Reference Phone Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="+1234567890" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="space-y-2">
-              <FormLabel>KTP Image</FormLabel>
-              <div className="relative">
-                <Input
-                  type="file"
-                  accept="image/*"
-                  id="ktp-upload"
-                  className="cursor-pointer"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onload = (event) => {
-                        const imageData = event.target?.result as string;
-                        if (imageData) {
-                          registerForm.setValue("ktpImage", imageData);
-                        }
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }}
-                />
-              </div>
-              {existingImages.ktp && (
-                <div className="mt-2">
-                  <p className="text-xs text-muted-foreground mb-1">
-                    Existing KTP Image:
-                  </p>
-                  <img
-                    src={existingImages.ktp}
-                    alt="KTP"
-                    className="w-full max-h-32 object-contain mb-2 border rounded"
-                  />
-                </div>
-              )}
-              <p className="text-xs text-muted-foreground">
-                Upload a photo of your KTP (ID card) - Required for driver
-                registration
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <FormLabel>SIM Image</FormLabel>
-              <div className="relative">
-                <Input
-                  type="file"
-                  accept="image/*"
-                  id="sim-upload"
-                  className="cursor-pointer"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onload = (event) => {
-                        const imageData = event.target?.result as string;
-                        if (imageData) {
-                          registerForm.setValue("simImage", imageData);
-                        }
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }}
-                />
-              </div>
-              {existingImages.sim && (
-                <div className="mt-2">
-                  <p className="text-xs text-muted-foreground mb-1">
-                    Existing SIM Image:
-                  </p>
-                  <img
-                    src={existingImages.sim}
-                    alt="SIM"
-                    className="w-full max-h-32 object-contain mb-2 border rounded"
-                  />
-                </div>
-              )}
-              <p className="text-xs text-muted-foreground">
-                Upload a photo of your SIM (Driver's License) - Required for
-                driver registration
-              </p>
-            </div>
-
-            {/* Driver Perusahaan specific fields */}
-            {registerForm.watch("role") === "Driver Perusahaan" && (
-              <div className="space-y-2 mt-4 pt-4 border-t border-border">
-                <h4 className="font-medium">Driver Perusahaan Documents</h4>
-                <FormLabel>SKCK Image</FormLabel>
-                <div className="relative">
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    id="skck-upload"
-                    className="cursor-pointer"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                          const imageData = event.target?.result as string;
-                          if (imageData) {
-                            registerForm.setValue("skckImage", imageData);
-                          }
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                  />
-                </div>
-                {existingImages.skck && (
-                  <div className="mt-2">
-                    <p className="text-xs text-muted-foreground mb-1">
-                      Existing SKCK Image:
-                    </p>
-                    <img
-                      src={existingImages.skck}
-                      alt="SKCK"
-                      className="w-full max-h-32 object-contain mb-2 border rounded"
-                    />
-                  </div>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Upload a photo of your SKCK (Police Clearance Certificate) -
-                  Required for Driver Perusahaan
-                </p>
-              </div>
-            )}
-
-            {/* Driver Mitra specific fields - Vehicle Information */}
-            {registerForm.watch("role") === "Driver Mitra" && (
-              <div className="space-y-4 mt-4 pt-4 border-t border-border">
-                <h4 className="font-medium">Vehicle Information</h4>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={registerForm.control}
-                    name="make"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Make</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Toyota" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={registerForm.control}
-                    name="model"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Model</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Avanza" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={registerForm.control}
-                    name="year"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Year</FormLabel>
-                        <FormControl>
-                          <Input placeholder="2020" type="number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={registerForm.control}
-                    name="color"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Color</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Silver" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={registerForm.control}
-                  name="license_plate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>License Plate</FormLabel>
-                      <FormControl>
-                        <Input placeholder="B 1234 CD" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={registerForm.control}
-                    name="type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Type</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="SUV">SUV</SelectItem>
-                            <SelectItem value="Sedan">Sedan</SelectItem>
-                            <SelectItem value="MPV">MPV</SelectItem>
-                            <SelectItem value="Hatchback">Hatchback</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={registerForm.control}
-                    name="category"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Category</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select category" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Economy">Economy</SelectItem>
-                            <SelectItem value="Standard">Standard</SelectItem>
-                            <SelectItem value="Premium">Premium</SelectItem>
-                            <SelectItem value="Luxury">Luxury</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={registerForm.control}
-                    name="seats"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Seats</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select seats" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="2">2</SelectItem>
-                            <SelectItem value="4">4</SelectItem>
-                            <SelectItem value="5">5</SelectItem>
-                            <SelectItem value="7">7</SelectItem>
-                            <SelectItem value="8">8</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={registerForm.control}
-                    name="transmission"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Transmission</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select transmission" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Manual">Manual</SelectItem>
-                            <SelectItem value="Automatic">Automatic</SelectItem>
-                            <SelectItem value="CVT">CVT</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={registerForm.control}
-                  name="fuel_type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Fuel Type</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select fuel type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Petrol">Petrol</SelectItem>
-                          <SelectItem value="Diesel">Diesel</SelectItem>
-                          <SelectItem value="Electric">Electric</SelectItem>
-                          <SelectItem value="Hybrid">Hybrid</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="space-y-2 mt-4 pt-4 border-t border-border">
-                  <h4 className="font-medium">Required Documents</h4>
-
-                  <div className="space-y-2">
-                    <FormLabel>KK Image (Family Card)</FormLabel>
-                    <div className="relative">
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        id="kk-upload"
-                        className="cursor-pointer"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (event) => {
-                              const imageData = event.target?.result as string;
-                              if (imageData) {
-                                registerForm.setValue("kkImage", imageData);
-                              }
-                            };
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                      />
-                    </div>
-                    {registerForm.watch("kkImage") && (
-                      <div className="mt-2">
-                        <p className="text-xs text-muted-foreground mb-1">
-                          Selected KK Image:
-                        </p>
-                        <img
-                          src={registerForm.watch("kkImage")}
-                          alt="KK"
-                          className="w-full max-h-32 object-contain mb-2 border rounded"
-                        />
-                      </div>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      Upload a photo of your KK (Family Card) - Required for
-                      Driver Mitra
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <FormLabel>STNK Image (Vehicle Registration)</FormLabel>
-                    <div className="relative">
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        id="stnk-upload"
-                        className="cursor-pointer"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (event) => {
-                              const imageData = event.target?.result as string;
-                              if (imageData) {
-                                registerForm.setValue("stnkImage", imageData);
-                              }
-                            };
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                      />
-                    </div>
-                    {registerForm.watch("stnkImage") && (
-                      <div className="mt-2">
-                        <p className="text-xs text-muted-foreground mb-1">
-                          Selected STNK Image:
-                        </p>
-                        <img
-                          src={registerForm.watch("stnkImage")}
-                          alt="STNK"
-                          className="w-full max-h-32 object-contain mb-2 border rounded"
-                        />
-                      </div>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      Upload a photo of your STNK (Vehicle Registration) -
-                      Required for Driver Mitra
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+        {/* Driver Mitra specific fields - Vehicle Information */}
+        {registerForm.watch("role") === "Driver Mitra" && (
+          <DriverMitraForm
+            control={registerForm.control}
+            watch={registerForm.watch}
+            setValue={registerForm.setValue}
+          />
         )}
 
         {registerForm.watch("role") === "Staff" && (
-          <div className="space-y-4 border p-4 rounded-md bg-muted/30">
-            <h3 className="font-medium">Staff Information</h3>
-
-            <FormField
-              control={registerForm.control}
-              name="department"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Department</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter department" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={registerForm.control}
-              name="position"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Position</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter position" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={registerForm.control}
-              name="employeeId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Employee ID</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter employee ID" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="space-y-2">
-              <FormLabel>ID Card Image</FormLabel>
-              <div className="relative">
-                <Input
-                  type="file"
-                  accept="image/*"
-                  id="idcard-upload"
-                  className="cursor-pointer"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onload = (event) => {
-                        const imageData = event.target?.result as string;
-                        if (imageData) {
-                          registerForm.setValue("idCardImage", imageData);
-                        }
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }}
-                />
-              </div>
-              {existingImages.idCard && (
-                <div className="mt-2">
-                  <p className="text-xs text-muted-foreground mb-1">
-                    Existing ID Card Image:
-                  </p>
-                  <img
-                    src={existingImages.idCard}
-                    alt="ID Card"
-                    className="w-full max-h-32 object-contain mb-2 border rounded"
-                  />
-                </div>
-              )}
-              <p className="text-xs text-muted-foreground">
-                Upload a photo of your ID Card - Required for staff registration
-              </p>
-            </div>
-          </div>
+          <StaffForm
+            control={registerForm.control}
+            watch={registerForm.watch}
+            setValue={registerForm.setValue}
+            existingImages={existingImages}
+          />
         )}
 
         {/* Selfie Capture Component */}

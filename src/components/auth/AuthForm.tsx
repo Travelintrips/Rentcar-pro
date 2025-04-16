@@ -6,6 +6,7 @@ import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import RegistrationForm, { RegisterFormValues } from "./RegistrationForm";
 import { uploadDocumentImages } from "@/lib/edgeFunctions";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import {
   Card,
@@ -41,6 +42,9 @@ interface AuthFormProps {
   onRegister?: (data: RegisterFormValues) => void;
   isLoading?: boolean;
   onAuthStateChange?: (state: boolean) => void;
+  initialMode?: "signin" | "register";
+  initialTab?: "login" | "register";
+  onClose?: () => void;
 }
 
 const AuthForm: React.FC<AuthFormProps> = ({
@@ -48,9 +52,16 @@ const AuthForm: React.FC<AuthFormProps> = ({
   onRegister = () => {},
   isLoading = false,
   onAuthStateChange,
+  initialMode = "login",
+  initialTab,
+  onClose,
 }) => {
-  const [activeTab, setActiveTab] = useState<"login" | "register">("login");
+  const [activeTab, setActiveTab] = useState<"login" | "register">(
+    initialTab || (initialMode === "signin" ? "login" : "register"),
+  );
   const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -74,12 +85,13 @@ const AuthForm: React.FC<AuthFormProps> = ({
       });
 
       if (error) {
+        console.error("Login error:", error);
         setLoginError(error.message);
         return;
       }
 
       // Get role from user metadata instead of querying the database
-      const userRole = authData.user.user_metadata.role || "User";
+      const userRole = authData.user?.user_metadata?.role || "User";
 
       // Check if the user is a driver and if they are suspended
       if (userRole === "Driver") {
@@ -108,10 +120,18 @@ const AuthForm: React.FC<AuthFormProps> = ({
 
       console.log("User logged in with role:", userRole);
 
+      // No longer redirecting to specific URL after login
+      console.log("User logged in successfully");
+
       onLogin(data);
       // Update authentication state after successful login
       if (onAuthStateChange) {
         onAuthStateChange(true);
+      }
+
+      // Close the form after successful login
+      if (onClose) {
+        onClose();
       }
     } catch (error) {
       setLoginError("An unexpected error occurred");
@@ -124,38 +144,14 @@ const AuthForm: React.FC<AuthFormProps> = ({
   const handleRegisterSubmit = async (data: RegisterFormValues) => {
     setIsSubmitting(true);
     try {
-      // Prepare user metadata based on role
-      const userMetadata: Record<string, any> = {
-        full_name: data.name,
-        role: data.role,
-        phone_number: data.phone,
-        has_selfie: !!data.selfieImage,
-      };
-
-      // Add role-specific data to metadata
-      if (data.role === "Driver Mitra" || data.role === "Driver Perusahaan") {
-        userMetadata.license_number = data.licenseNumber;
-        userMetadata.license_expiry = data.licenseExpiry;
-        userMetadata.reference_phone = data.referencePhone;
-
-        // Add Driver Mitra specific metadata
-        if (data.role === "Driver Mitra") {
-          userMetadata.has_kk = !!data.kkImage;
-          userMetadata.has_stnk = !!data.stnkImage;
-        }
-      } else if (data.role === "Staff") {
-        userMetadata.department = data.department;
-        userMetadata.position = data.position;
-        userMetadata.employee_id = data.employeeId;
-      }
-
-      // Register the user with Supabase
+      // Register with Supabase using NO metadata to prevent database errors
+      console.log("Registering with email and password only");
       const { data: authData, error: signUpError } = await supabase.auth.signUp(
         {
           email: data.email,
           password: data.password,
           options: {
-            data: userMetadata,
+            emailRedirectTo: `${window.location.origin}`,
           },
         },
       );
@@ -164,6 +160,9 @@ const AuthForm: React.FC<AuthFormProps> = ({
         console.error("Registration error:", signUpError);
         throw signUpError;
       }
+
+      // Add a small delay to allow the database trigger to complete
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Check if user was created successfully
       if (!authData.user) {
@@ -208,7 +207,7 @@ const AuthForm: React.FC<AuthFormProps> = ({
         // Upload document images
         let documentUrls = {
           ktpUrl: "",
-          simUrl: "",
+          licenseUrl: "",
           idCardUrl: "",
         };
 
@@ -242,7 +241,7 @@ const AuthForm: React.FC<AuthFormProps> = ({
               // Merge existing URLs with newly uploaded ones
               documentUrls = {
                 ktpUrl: uploadResult.ktpUrl || documentUrls.ktpUrl,
-                simUrl: uploadResult.simUrl || documentUrls.simUrl,
+                licenseUrl: uploadResult.licenseUrl || documentUrls.licenseUrl,
                 idCardUrl: uploadResult.idCardUrl || documentUrls.idCardUrl,
                 kkUrl: uploadResult.kkUrl || "",
                 stnkUrl: uploadResult.stnkUrl || "",
@@ -250,7 +249,7 @@ const AuthForm: React.FC<AuthFormProps> = ({
 
               console.log("All documents uploaded successfully:", {
                 ktpUrl: documentUrls.ktpUrl,
-                simUrl: documentUrls.simUrl,
+                licenseUrl: documentUrls.licenseUrl,
                 idCardUrl: documentUrls.idCardUrl,
                 kkUrl: documentUrls.kkUrl,
                 stnkUrl: documentUrls.stnkUrl,
@@ -267,7 +266,7 @@ const AuthForm: React.FC<AuthFormProps> = ({
                 if (documentUrls) {
                   console.log("Document URLs after upload:", {
                     ktpUrl: documentUrls.ktpUrl,
-                    simUrl: documentUrls.simUrl,
+                    licenseUrl: documentUrls.licenseUrl,
                     kkUrl: documentUrls.kkUrl,
                     stnkUrl: documentUrls.stnkUrl,
                   });
@@ -285,7 +284,7 @@ const AuthForm: React.FC<AuthFormProps> = ({
         const { data: roleData, error: roleError } = await supabase
           .from("roles")
           .select("id")
-          .ilike("role_name", data.role)
+          .ilike("name", data.role)
           .single();
 
         if (roleError) {
@@ -294,21 +293,46 @@ const AuthForm: React.FC<AuthFormProps> = ({
 
         const roleId = roleData?.id || null;
 
-        // Use upsert to handle both insert and update cases
-        const { error: updateError } = await supabase.from("users").upsert(
-          {
-            id: authData.user.id,
-            selfie_url: selfieUrl,
-            role_id: roleId,
-            full_name: data.name,
-            email: data.email,
-            phone: data.phone,
-          },
-          { onConflict: "id" },
-        );
+        // Use the edge function to assign the role
+        if (roleId && authData.user) {
+          try {
+            const { error: assignRoleError } = await supabase.functions.invoke(
+              "supabase-functions-assignRole",
+              {
+                body: { userId: authData.user.id, roleId },
+              },
+            );
 
-        if (updateError) {
-          console.error("Error updating user record:", updateError);
+            if (assignRoleError) {
+              console.error("Error assigning role:", assignRoleError);
+            }
+          } catch (assignError) {
+            console.error("Error invoking assignRole function:", assignError);
+          }
+        }
+
+        // Use upsert to handle both insert and update cases
+        try {
+          // Only update essential fields to avoid type errors
+          const { error: updateError } = await supabase.from("users").upsert(
+            {
+              id: authData.user.id,
+              selfie_url: selfieUrl,
+              full_name: data.name,
+              email: data.email,
+              phone: data.phone,
+              // Omit role_id to avoid type conversion issues
+            },
+            { onConflict: "id" },
+          );
+
+          if (updateError) {
+            console.error("Error updating user record:", updateError);
+          }
+        } catch (upsertError) {
+          console.error("Exception during user upsert:", upsertError);
+          // Continue with the registration process even if this fails
+          // The trigger should have created the basic user record
         }
 
         // Create or update role-specific records
@@ -384,7 +408,7 @@ const AuthForm: React.FC<AuthFormProps> = ({
             console.error("Error checking existing driver:", checkDriverError);
           }
 
-          // Prepare driver data
+          // Prepare driver data with all fields from the form
           const driverData = {
             id: authData.user.id,
             name: data.name,
@@ -397,10 +421,33 @@ const AuthForm: React.FC<AuthFormProps> = ({
             driver_type: data.role === "Driver Mitra" ? "mitra" : "perusahaan",
             status: "active", // Default status for new drivers
             ktp_url: documentUrls.ktpUrl,
-            sim_url: documentUrls.simUrl,
+            sim_url: documentUrls.licenseUrl,
             kk_url: documentUrls.kkUrl,
             stnk_url: documentUrls.stnkUrl,
+            // Add new fields
+            first_name: data.firstName,
+            last_name: data.lastName,
+            address: data.address,
+            birth_place: data.birthPlace,
+            birth_date: data.birthDate,
+            religion: data.religion,
           };
+
+          // Add vehicle information for Driver Mitra
+          if (data.role === "Driver Mitra") {
+            Object.assign(driverData, {
+              color: data.color,
+              license_plate: data.license_plate,
+              make: data.make,
+              model: data.model,
+              year: data.year,
+              vehicle_type: data.type,
+              category: data.category,
+              seats: data.seats,
+              transmission: data.transmission,
+              fuel_type: data.fuel_type,
+            });
+          }
 
           console.log("Driver data prepared for insertion/update:", {
             id: driverData.id,
@@ -448,7 +495,7 @@ const AuthForm: React.FC<AuthFormProps> = ({
             console.error("Error checking existing staff:", checkStaffError);
           }
 
-          // Prepare staff data
+          // Prepare staff data with all fields from the form
           const staffData = {
             id: authData.user.id,
             name: data.name,
@@ -505,6 +552,14 @@ const AuthForm: React.FC<AuthFormProps> = ({
       // Update authentication state after successful registration
       if (onAuthStateChange) {
         onAuthStateChange(true);
+      }
+
+      // No longer redirecting to specific URL after registration
+      console.log("User registered successfully");
+
+      // Close the form after successful registration
+      if (onClose) {
+        onClose();
       }
     } catch (error) {
       console.error("Registration error:", error);

@@ -51,6 +51,7 @@ export async function assignUserRole(userId: string, roleId: number) {
  * @param idCardImage ID Card image data URL (optional)
  * @param kkImage KK (Family Card) image data URL (optional)
  * @param stnkImage STNK (Vehicle Registration) image data URL (optional)
+ * @param skckImage SKCK (Police Clearance) image data URL (optional)
  * @returns The response from the function with URLs to the uploaded images
  */
 export async function uploadDocumentImages(
@@ -60,6 +61,7 @@ export async function uploadDocumentImages(
   idCardImage?: string,
   kkImage?: string,
   stnkImage?: string,
+  skckImage?: string,
 ) {
   return invokeEdgeFunction("supabase-functions-uploadDocuments", {
     userId,
@@ -68,5 +70,6 @@ export async function uploadDocumentImages(
     idCardImage,
     kkImage,
     stnkImage,
+    skckImage,
   });
 }

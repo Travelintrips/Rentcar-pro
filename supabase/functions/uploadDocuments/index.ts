@@ -13,7 +13,15 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { userId, ktpImage, simImage, idCardImage } = await req.json();
+    const {
+      userId,
+      ktpImage,
+      simImage,
+      idCardImage,
+      kkImage,
+      stnkImage,
+      skckImage,
+    } = await req.json();
 
     if (!userId) {
       throw new Error("User ID is required");
@@ -24,10 +32,30 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Create the driver_documents bucket if it doesn't exist
+    const { data: buckets } = await supabase.storage.listBuckets();
+    if (!buckets.find((bucket) => bucket.name === "driver_documents")) {
+      await supabase.storage.createBucket("driver_documents", {
+        public: true,
+        fileSizeLimit: 5242880, // 5MB
+      });
+    }
+
+    // Create the staff_documents bucket if it doesn't exist
+    if (!buckets.find((bucket) => bucket.name === "staff_documents")) {
+      await supabase.storage.createBucket("staff_documents", {
+        public: true,
+        fileSizeLimit: 5242880, // 5MB
+      });
+    }
+
     const uploadResults = {
       ktpUrl: "",
       simUrl: "",
       idCardUrl: "",
+      kkUrl: "",
+      stnkUrl: "",
+      skckUrl: "",
     };
 
     // Upload KTP image if provided
@@ -95,6 +123,108 @@ Deno.serve(async (req) => {
         }
       } catch (error) {
         console.error("Error in SIM upload process:", error);
+      }
+    }
+
+    // Upload KK image if provided
+    if (kkImage) {
+      try {
+        const kkBlob = await fetch(kkImage).then((res) => res.blob());
+        const kkFileName = `kk_${userId}_${new Date().getTime()}.jpg`;
+
+        const { data: kkData, error: kkError } = await supabase.storage
+          .from("driver_documents")
+          .upload(kkFileName, kkBlob);
+
+        if (kkError) {
+          console.error("Error uploading KK image:", kkError);
+        } else if (kkData) {
+          const { data: kkUrlData } = supabase.storage
+            .from("driver_documents")
+            .getPublicUrl(kkFileName);
+
+          uploadResults.kkUrl = kkUrlData.publicUrl;
+
+          // Update the drivers table with the KK URL
+          const { error: updateError } = await supabase
+            .from("drivers")
+            .update({ kk_url: kkUrlData.publicUrl })
+            .eq("id", userId);
+
+          if (updateError) {
+            console.error("Error updating driver KK URL:", updateError);
+          }
+        }
+      } catch (error) {
+        console.error("Error in KK upload process:", error);
+      }
+    }
+
+    // Upload STNK image if provided
+    if (stnkImage) {
+      try {
+        const stnkBlob = await fetch(stnkImage).then((res) => res.blob());
+        const stnkFileName = `stnk_${userId}_${new Date().getTime()}.jpg`;
+
+        const { data: stnkData, error: stnkError } = await supabase.storage
+          .from("driver_documents")
+          .upload(stnkFileName, stnkBlob);
+
+        if (stnkError) {
+          console.error("Error uploading STNK image:", stnkError);
+        } else if (stnkData) {
+          const { data: stnkUrlData } = supabase.storage
+            .from("driver_documents")
+            .getPublicUrl(stnkFileName);
+
+          uploadResults.stnkUrl = stnkUrlData.publicUrl;
+
+          // Update the drivers table with the STNK URL
+          const { error: updateError } = await supabase
+            .from("drivers")
+            .update({ stnk_url: stnkUrlData.publicUrl })
+            .eq("id", userId);
+
+          if (updateError) {
+            console.error("Error updating driver STNK URL:", updateError);
+          }
+        }
+      } catch (error) {
+        console.error("Error in STNK upload process:", error);
+      }
+    }
+
+    // Upload SKCK image if provided
+    if (skckImage) {
+      try {
+        const skckBlob = await fetch(skckImage).then((res) => res.blob());
+        const skckFileName = `skck_${userId}_${new Date().getTime()}.jpg`;
+
+        const { data: skckData, error: skckError } = await supabase.storage
+          .from("driver_documents")
+          .upload(skckFileName, skckBlob);
+
+        if (skckError) {
+          console.error("Error uploading SKCK image:", skckError);
+        } else if (skckData) {
+          const { data: skckUrlData } = supabase.storage
+            .from("driver_documents")
+            .getPublicUrl(skckFileName);
+
+          uploadResults.skckUrl = skckUrlData.publicUrl;
+
+          // Update the drivers table with the SKCK URL
+          const { error: updateError } = await supabase
+            .from("drivers")
+            .update({ skck_url: skckUrlData.publicUrl })
+            .eq("id", userId);
+
+          if (updateError) {
+            console.error("Error updating driver SKCK URL:", updateError);
+          }
+        }
+      } catch (error) {
+        console.error("Error in SKCK upload process:", error);
       }
     }
 

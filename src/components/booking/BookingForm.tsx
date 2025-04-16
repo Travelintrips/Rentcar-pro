@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Calendar } from "@/components/ui/calendar";
 import {
   CalendarIcon,
@@ -14,6 +14,7 @@ import {
   Building2,
   Check,
   ChevronRight,
+  ArrowLeft,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -108,6 +109,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
   const [bookingId, setBookingId] = useState<string>("");
   const [showInspection, setShowInspection] = useState(false);
   const [showPickupCustomer, setShowPickupCustomer] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isLoadingVehicles, setIsLoadingVehicles] = useState(false);
@@ -164,6 +166,25 @@ const BookingForm: React.FC<BookingFormProps> = ({
     };
 
     fetchVehicles();
+
+    // Check authentication status
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticated(!!data.session);
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setIsAuthenticated(!!session);
+      },
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   const form = useForm<FormValues>({
@@ -417,9 +438,16 @@ const BookingForm: React.FC<BookingFormProps> = ({
           <div className="mb-6 p-4 bg-muted rounded-lg flex items-center gap-4">
             <div className="w-20 h-20 overflow-hidden rounded-md">
               <img
-                src={vehicleToUse.image}
-                alt={vehicleToUse.name}
+                src={
+                  vehicleToUse.image ||
+                  "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&q=80"
+                }
+                alt={`${vehicleToUse.make} ${vehicleToUse.model}`}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src =
+                    "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&q=80";
+                }}
               />
             </div>
             <div>
@@ -741,16 +769,62 @@ const BookingForm: React.FC<BookingFormProps> = ({
             )}
 
             <div className="flex justify-between mt-6">
-              {step === 2 && (
+              {step === 1 ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate(-1)}
+                  className="flex items-center gap-1"
+                >
+                  <ArrowLeft className="h-4 w-4" /> Back
+                </Button>
+              ) : (
                 <Button type="button" variant="outline" onClick={prevStep}>
                   Back
                 </Button>
               )}
 
               {step === 1 ? (
-                <Button type="button" className="ml-auto" onClick={nextStep}>
-                  Next <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
+                isAuthenticated ? (
+                  <Button type="button" className="ml-auto" onClick={nextStep}>
+                    Next <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                ) : (
+                  <div className="flex gap-2 ml-auto">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() =>
+                        navigate("/", {
+                          state: { openAuthForm: true, initialTab: "login" },
+                        })
+                      }
+                    >
+                      Sign In
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() =>
+                        navigate("/", {
+                          state: { openAuthForm: true, initialTab: "register" },
+                        })
+                      }
+                    >
+                      Register
+                    </Button>
+                    <Button
+                      type="button"
+                      className="ml-2"
+                      onClick={() => {
+                        alert(
+                          "Please sign in or register to continue with your booking.",
+                        );
+                      }}
+                    >
+                      Next <ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                )
               ) : (
                 <Button
                   type="submit"

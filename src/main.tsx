@@ -6,7 +6,15 @@ import { BrowserRouter } from "react-router-dom";
 import "./lib/i18n";
 
 import { TempoDevtools } from "tempo-devtools";
-TempoDevtools.init();
+
+// Only initialize TempoDevtools if Redux DevTools extension is available
+// This prevents the warning when the extension is not installed
+if (
+  typeof window !== "undefined" &&
+  (window as any).__REDUX_DEVTOOLS_EXTENSION__
+) {
+  TempoDevtools.init();
+}
 
 const basename = import.meta.env.BASE_URL;
 

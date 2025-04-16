@@ -90,6 +90,9 @@ const RoleAssignment: React.FC<RoleAssignmentProps> = ({
             <SelectItem value="3">Supervisor</SelectItem>
             <SelectItem value="4">Staff</SelectItem>
             <SelectItem value="5">HRD</SelectItem>
+            <SelectItem value="6">Customer</SelectItem>
+            <SelectItem value="7">Driver Mitra</SelectItem>
+            <SelectItem value="8">Driver Perusahaan</SelectItem>
           </SelectContent>
         </Select>
       </div>

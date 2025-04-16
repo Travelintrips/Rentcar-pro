@@ -1,5 +1,12 @@
 {
   "brand": "CarRental",
+  "common": {
+    "back": "Back",
+    "search": "Search",
+    "book": "Book",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
+  },
   "navbar": {
     "signIn": "Sign In",
     "signOut": "Sign Out",
@@ -10,7 +17,8 @@
     "title": "Premium Car Rental Service",
     "description": "Experience the freedom of the road with our extensive fleet of vehicles. Book your perfect ride today and enjoy hassle-free travel.",
     "browseCars": "Browse Cars",
-    "bookNow": "Book Now"
+    "bookNow": "Book Now",
+    "airportTransfer": "Airport Transfer"
   },
   "auth": {
     "readyToBook": "Ready to Book Your Ride?",
@@ -51,6 +59,35 @@
     "remainingBalance": "Remaining Balance:",
     "backToInspection": "Back to Inspection",
     "completePayment": "Complete Payment"
+  },
+  "airportTransfer": {
+    "title": "Airport transfers made",
+    "subtitle": "surprisingly easy and enjoyable!",
+    "bookingTitle": "Book your airport taxi transfer. Worldwide.",
+    "from": "From: Airport, hotel, station, port, address...",
+    "to": "To: Airport, hotel, station, port, address...",
+    "search": "Search",
+    "roundTrip": "Round trip",
+    "freeCancellation": "Free cancellation",
+    "flightTracking": "Flight tracking",
+    "support": "24/7 customer support",
+    "arranged": "ARRANGED IN A MINUTE",
+    "bookSteps": {
+      "title": "Book an airport transfer",
+      "subtitle": "in 3 easy steps",
+      "step1": {
+        "title": "Schedule in advance",
+        "description": "Schedule a time and pick up location to bring you to your destination."
+      },
+      "step2": {
+        "title": "Vehicle options",
+        "description": "Choose a car type and options to make your trip enjoyable."
+      },
+      "step3": {
+        "title": "Pay and relax",
+        "description": "No hidden costs. Pay via trusted partners. No worries, we have a cancellation policy."
+      }
+    }
   },
   "vehicleSelector": {
     "searchPlaceholder": "Search vehicles...",
