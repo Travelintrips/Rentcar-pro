@@ -660,15 +660,6 @@ const Home = () => {
                   {selectedModel.availableCount !== 1 ? "s" : ""} available
                 </p>
               </div>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowModelDetail(false);
-                  navigate("/");
-                }}
-              >
-                Back to Models
-              </Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
