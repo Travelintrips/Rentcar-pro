@@ -5,7 +5,7 @@ import { Input } from "./ui/input";
 import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
 import { ScrollArea } from "./ui/scroll-area";
 import { v4 as uuidv4 } from "uuid";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 import axios from "axios";
 
 type Message = {
@@ -61,11 +61,14 @@ export default function ChatBox({
       setIsLoading(true);
       try {
         // Log the message to Supabase
-        await supabase.from("messages").insert({
-          content: newMessage,
-          sender: "user",
-          recipient: recipient,
-        });
+        const supabaseClient = getSupabase();
+        if (supabaseClient) {
+          await supabaseClient.from("messages").insert({
+            content: newMessage,
+            sender: "user",
+            recipient: recipient,
+          });
+        }
 
         // Send message via WhatsApp if needed
         // This would use the Fonnte API
