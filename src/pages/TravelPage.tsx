@@ -106,7 +106,7 @@ const TravelPage = () => {
         break;
       case "Car Rental":
         window.location.href =
-          "https://amazing-cannon2-qguam.view-3.tempo-dev.app/tempobook/storyboards/3c6c1dd7-3070-4035-84c7-76ebf4558bf1?storyboard=true&type=COMPONENT&framework=VITE";
+          "https://amazing-cannon2-qguam.view-3.tempo-dev.app/rentcar";
         break;
       case "Things to Do":
         navigate("/things-to-do");
