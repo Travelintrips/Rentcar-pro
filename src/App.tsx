@@ -9,7 +9,7 @@ import {
 import DamagePaymentForm from "./components/payment/DamagePaymentForm";
 // Import tempo-routes dynamically to avoid initialization issues
 import routes from "tempo-routes";
-import Home from "./components/home";
+import RentCar from "./components/RentCar";
 import TravelPage from "./pages/TravelPage";
 import ModelDetailPage from "./pages/ModelDetailPage";
 import PaymentDetailsPage from "./pages/PaymentDetailsPage";
@@ -122,7 +122,8 @@ function App() {
               />
 
               <Route path="/" element={<TravelPage />} />
-              <Route path="/home" element={<Home />} />
+              <Route path="/home" element={<RentCar />} />
+              <Route path="/rentcar" element={<RentCar />} />
               <Route path="/models/:modelName" element={<ModelDetailPage />} />
               <Route
                 path="/models/:modelName/*"
@@ -179,7 +180,7 @@ function App() {
             />
 
             <Route path="/" element={<TravelPage />} />
-            <Route path="/home" element={<Home />} />
+            <Route path="/rentcar" element={<RentCar />} />
             <Route path="/models/:modelName" element={<ModelDetailPage />} />
             <Route path="/models/:modelName/*" element={<ModelDetailPage />} />
             <Route path="/booking" element={<BookingPage />} />

@@ -55,7 +55,7 @@ interface CarModel {
   vehicles: Vehicle[];
 }
 
-const Home = () => {
+const RentCar = () => {
   const navigate = useNavigate();
   const { modelName } = useParams<{ modelName: string }>();
   const { t, i18n } = useTranslation();
@@ -982,4 +982,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default RentCar;
