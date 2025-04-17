@@ -2,11 +2,12 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import RegistrationForm, { RegisterFormValues } from "./RegistrationForm";
 import { uploadDocumentImages } from "@/lib/edgeFunctions";
 import { useNavigate, useLocation } from "react-router-dom";
+import AuthModal from "./AuthModal";
 
 import {
   Card,
@@ -579,141 +580,19 @@ const AuthForm: React.FC<AuthFormProps> = ({
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto bg-card">
-      <CardHeader>
-        <CardTitle className="text-2xl text-center">
-          Car Rental System
-        </CardTitle>
-        <CardDescription className="text-center">
-          Sign in to your account or create a new one
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Tabs
-          value={activeTab}
-          onValueChange={(value) => setActiveTab(value as "login" | "register")}
-        >
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="register">Register</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="login">
-            <Form {...loginForm}>
-              <form
-                onSubmit={loginForm.handleSubmit(handleLoginSubmit)}
-                className="space-y-4"
-              >
-                <FormField
-                  control={loginForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                          <Input
-                            placeholder="email@example.com"
-                            className="pl-10"
-                            {...field}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={loginForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                          <Input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="******"
-                            className="pl-10"
-                            {...field}
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-1 top-1"
-                            onClick={togglePasswordVisibility}
-                          >
-                            {showPassword ? (
-                              <EyeOff className="h-5 w-5 text-muted-foreground" />
-                            ) : (
-                              <Eye className="h-5 w-5 text-muted-foreground" />
-                            )}
-                          </Button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {loginError && (
-                  <div className="text-sm text-destructive mb-2">
-                    {loginError}
-                  </div>
-                )}
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isLoading || isSubmitting}
-                >
-                  {isLoading || isSubmitting ? "Signing in..." : "Sign In"}
-                </Button>
-              </form>
-            </Form>
-          </TabsContent>
-
-          <TabsContent value="register">
-            <RegistrationForm
-              onRegister={handleRegisterSubmit}
-              isLoading={isLoading}
-              showPassword={showPassword}
-              togglePasswordVisibility={togglePasswordVisibility}
-            />
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-      <CardFooter className="flex flex-col space-y-2">
-        <div className="text-sm text-muted-foreground text-center">
-          {activeTab === "login" ? (
-            <p>
-              Don't have an account?{" "}
-              <Button
-                variant="link"
-                className="p-0 h-auto"
-                onClick={() => setActiveTab("register")}
-              >
-                Register
-              </Button>
-            </p>
-          ) : (
-            <p>
-              Already have an account?{" "}
-              <Button
-                variant="link"
-                className="p-0 h-auto"
-                onClick={() => setActiveTab("login")}
-              >
-                Login
-              </Button>
-            </p>
-          )}
-        </div>
-      </CardFooter>
-    </Card>
+    <AuthModal
+      onClose={onClose}
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      loginForm={loginForm}
+      handleLoginSubmit={handleLoginSubmit}
+      loginError={loginError}
+      isLoading={isLoading}
+      isSubmitting={isSubmitting}
+      showPassword={showPassword}
+      togglePasswordVisibility={togglePasswordVisibility}
+      handleRegisterSubmit={handleRegisterSubmit}
+    />
   );
 };
 
