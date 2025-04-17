@@ -628,98 +628,88 @@ const TravelPage = () => {
           </div>
         </div>
 
-        {/* Trusted By Section */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-200 mb-2">Trusted by</p>
-          <div className="flex justify-center space-x-6">
-            <div className="bg-white p-2 rounded-md">
-              <span className="text-yellow-500 font-bold">ETIHAD</span>
-            </div>
-            <div className="bg-white p-2 rounded-md">
-              <span className="text-green-500 font-bold">LUFTHANSA</span>
-            </div>
-            <div className="bg-white p-2 rounded-md">
-              <span className="text-red-500 font-bold">GARUDA</span>
-            </div>
+        {/* Promotions Section */}
+        <div className="container mx-auto px-4 py-8 bg-white rounded-t-3xl mt-8">
+          <div className="flex items-center mb-4">
+            <div className="text-green-600 mr-2">🎁</div>
+            <h2 className="text-lg font-bold text-green-900">
+              8% New User Coupons
+            </h2>
           </div>
-        </div>
-      </div>
+          <p className="text-sm text-gray-600 mb-4">
+            Valid for First Transaction on Travelintrips App
+          </p>
 
-      {/* Promotions Section */}
-      <div className="container mx-auto px-4 py-8 bg-white rounded-t-3xl">
-        <div className="flex items-center mb-4">
-          <div className="text-green-600 mr-2">🎁</div>
-          <h2 className="text-lg font-bold text-green-900">
-            8% New User Coupons
-          </h2>
-        </div>
-        <p className="text-sm text-gray-600 mb-4">
-          Valid for First Transaction on Travelintrips App
-        </p>
-
-        <div className="grid grid-cols-3 gap-4">
-          <Card className="p-4 border border-gray-200 rounded-lg">
-            <div className="flex justify-between items-start">
-              <div>
-                <Badge className="bg-green-100 text-green-800 mb-2">
-                  Diskon 8% Hotel
-                </Badge>
-                <p className="text-xs text-gray-500">min. transaksi Rp 500rb</p>
+          <div className="grid grid-cols-3 gap-4">
+            <Card className="p-4 border border-gray-200 rounded-lg">
+              <div className="flex justify-between items-start">
+                <div>
+                  <Badge className="bg-green-100 text-green-800 mb-2">
+                    Diskon 8% Hotel
+                  </Badge>
+                  <p className="text-xs text-gray-500">
+                    min. transaksi Rp 500rb
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-green-500 border-green-500"
+                >
+                  Copy
+                </Button>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-green-500 border-green-500"
-              >
-                Copy
-              </Button>
-            </div>
-            <div className="mt-4 flex items-center">
-              <span className="text-xs font-bold">JALANYUK</span>
-            </div>
-          </Card>
-
-          <Card className="p-4 border border-gray-200 rounded-lg">
-            <div className="flex justify-between items-start">
-              <div>
-                <Badge className="bg-red-100 text-red-800 mb-2">
-                  Diskon s.d 8% Xperience
-                </Badge>
-                <p className="text-xs text-gray-500">min. transaksi Rp 300rb</p>
+              <div className="mt-4 flex items-center">
+                <span className="text-xs font-bold">JALANYUK</span>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-green-500 border-green-500"
-              >
-                Copy
-              </Button>
-            </div>
-            <div className="mt-4 flex items-center">
-              <span className="text-xs font-bold">JALANYUK</span>
-            </div>
-          </Card>
+            </Card>
 
-          <Card className="p-4 border border-gray-200 rounded-lg">
-            <div className="flex justify-between items-start">
-              <div>
-                <Badge className="bg-green-100 text-green-800 mb-2">
-                  Diskon 12% Antar Jemput Bandara
-                </Badge>
-                <p className="text-xs text-gray-500">min. transaksi Rp 150rb</p>
+            <Card className="p-4 border border-gray-200 rounded-lg">
+              <div className="flex justify-between items-start">
+                <div>
+                  <Badge className="bg-red-100 text-red-800 mb-2">
+                    Diskon s.d 8% Xperience
+                  </Badge>
+                  <p className="text-xs text-gray-500">
+                    min. transaksi Rp 300rb
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-green-500 border-green-500"
+                >
+                  Copy
+                </Button>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-green-500 border-green-500"
-              >
-                Copy
-              </Button>
-            </div>
-            <div className="mt-4 flex items-center">
-              <span className="text-xs font-bold">JALANYUK</span>
-            </div>
-          </Card>
+              <div className="mt-4 flex items-center">
+                <span className="text-xs font-bold">JALANYUK</span>
+              </div>
+            </Card>
+
+            <Card className="p-4 border border-gray-200 rounded-lg">
+              <div className="flex justify-between items-start">
+                <div>
+                  <Badge className="bg-green-100 text-green-800 mb-2">
+                    Diskon 12% Antar Jemput Bandara
+                  </Badge>
+                  <p className="text-xs text-gray-500">
+                    min. transaksi Rp 150rb
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-green-500 border-green-500"
+                >
+                  Copy
+                </Button>
+              </div>
+              <div className="mt-4 flex items-center">
+                <span className="text-xs font-bold">JALANYUK</span>
+              </div>
+            </Card>
+          </div>
         </div>
       </div>
 
