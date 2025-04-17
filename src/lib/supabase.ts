@@ -1,17 +1,19 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Use hardcoded values since environment variables are causing issues
+const supabaseUrl = "https://wvqlwgmlijtcutvseyey.supabase.co";
+const supabaseAnonKey =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind2cWx3Z21saWp0Y3V0dnNleWV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM5NzI2OTUsImV4cCI6MjA1OTU0ODY5NX0.Qm4CaTrRuTAUuYLqHV1d6NAzmTFkfyOxOIJYYkuB0O0";
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error("Missing Supabase environment variables");
-  // Provide fallback values for development to prevent runtime errors
-  // These won't actually connect to a real Supabase instance
+if (!supabaseUrl) {
+  console.error("Missing Supabase URL");
+  throw new Error("Supabase URL is required.");
 }
 
-// Only create the client if we have the required values
-export const supabase = createClient<Database>(
-  supabaseUrl || "https://placeholder-url.supabase.co",
-  supabaseAnonKey || "placeholder-key",
-);
+if (!supabaseAnonKey) {
+  console.error("Missing Supabase Anon Key");
+  throw new Error("Supabase Anon Key is required.");
+}
+
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
