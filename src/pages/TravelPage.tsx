@@ -193,13 +193,37 @@ const TravelPage = () => {
                 </PopoverContent>
               </Popover>
 
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-white hover:bg-green-800"
-              >
-                Partnership
-              </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-white hover:bg-green-800"
+                  >
+                    Partnership <ChevronDown className="h-4 w-4 ml-1" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-48">
+                  <div className="grid gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="justify-start"
+                      onClick={() => navigate("/driver-mitra")}
+                    >
+                      Driver Mitra
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="justify-start"
+                      onClick={() => navigate("/driver-perusahaan")}
+                    >
+                      Driver Perusahaan
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
 
               <Button
                 size="sm"
