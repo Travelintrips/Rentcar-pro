@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense } from "react";
 import {
   useRoutes,
   Routes,
@@ -29,7 +29,7 @@ import ChecklistManagement from "./components/admin/ChecklistManagement";
 import DamageManagement from "./components/admin/DamageManagement";
 import VehicleInventory from "./components/admin/VehicleInventory";
 import AirportTransferPage from "./pages/AirportTransferPage";
-import { supabase } from "./lib/supabase";
+import { useAuth } from "./hooks/useAuth";
 
 // Define window.__TEMPO_ROUTES__ to avoid undefined errors
 declare global {
@@ -39,42 +39,7 @@ declare global {
 }
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Check if user is already authenticated
-    const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        setIsAuthenticated(true);
-        const storedRole = localStorage.getItem("userRole");
-        setUserRole(storedRole);
-      }
-      setIsLoading(false);
-    };
-
-    checkAuth();
-
-    // Listen for auth changes
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === "SIGNED_IN" && session) {
-          setIsAuthenticated(true);
-          const storedRole = localStorage.getItem("userRole");
-          setUserRole(storedRole);
-        } else if (event === "SIGNED_OUT") {
-          setIsAuthenticated(false);
-          setUserRole(null);
-        }
-      },
-    );
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
+  const { isAuthenticated, userRole, isLoading } = useAuth();
 
   // Protected route component
   const ProtectedRoute = ({
@@ -103,8 +68,14 @@ function App() {
   };
 
   return (
-    <div>
-      <Suspense fallback={<p>Loading...</p>}>
+    <div className="min-h-screen w-full">
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center h-screen">
+            <p>Loading...</p>
+          </div>
+        }
+      >
         {/* Conditionally render either tempoRoutes or manual Routes */}
         {import.meta.env.VITE_TEMPO ? (
           <>
@@ -113,6 +84,10 @@ function App() {
               {
                 path: "/",
                 element: <TravelPage />,
+              },
+              {
+                path: "/rentcar",
+                element: <RentCar />,
               },
               ...routes,
             ])}

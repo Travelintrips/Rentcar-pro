@@ -105,7 +105,6 @@ const TravelPage = () => {
         navigate("/airport-transfer");
         break;
       case "Car Rental":
-      case "Car Rental":
         navigate("/rentcar");
         break;
       case "Things to Do":
@@ -123,8 +122,8 @@ const TravelPage = () => {
     <div className="min-h-screen bg-gradient-to-b from-green-800 to-green-600">
       {/* Header */}
       <header className="bg-green-800 text-white p-4">
-        <div className="container mx-auto flex justify-between items-center">
-          <div className="flex items-center space-x-4">
+        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex items-center space-x-4 w-full md:w-auto justify-between">
             <Button
               size="sm"
               variant="ghost"
@@ -154,7 +153,7 @@ const TravelPage = () => {
             </div>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-4 w-full md:w-auto">
             <div className="flex items-center space-x-1">
               <span>🇮🇩</span>
               <span>EN</span>
@@ -163,59 +162,94 @@ const TravelPage = () => {
               <ChevronDown className="h-4 w-4" />
             </div>
 
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-white hover:bg-green-800"
-            >
-              Deals
-            </Button>
+            <div className="hidden md:flex items-center space-x-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-white hover:bg-green-800"
+              >
+                Deals
+              </Button>
 
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-white hover:bg-green-800"
-                >
-                  Support <ChevronDown className="h-4 w-4 ml-1" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-48">
-                <div className="grid gap-2">
-                  <Button variant="ghost" size="sm" className="justify-start">
-                    Help Center
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-white hover:bg-green-800"
+                  >
+                    Support <ChevronDown className="h-4 w-4 ml-1" />
                   </Button>
-                  <Button variant="ghost" size="sm" className="justify-start">
-                    Contact Us
+                </PopoverTrigger>
+                <PopoverContent className="w-48">
+                  <div className="grid gap-2">
+                    <Button variant="ghost" size="sm" className="justify-start">
+                      Help Center
+                    </Button>
+                    <Button variant="ghost" size="sm" className="justify-start">
+                      Contact Us
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-white hover:bg-green-800"
+              >
+                Partnership
+              </Button>
+
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-white hover:bg-green-800"
+              >
+                For Corporates
+              </Button>
+
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-white hover:bg-green-800"
+              >
+                Bookings
+              </Button>
+            </div>
+
+            <div className="md:hidden">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-white hover:bg-green-800"
+                  >
+                    Menu <ChevronDown className="h-4 w-4 ml-1" />
                   </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-white hover:bg-green-800"
-            >
-              Partnership
-            </Button>
-
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-white hover:bg-green-800"
-            >
-              For Corporates
-            </Button>
-
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-white hover:bg-green-800"
-            >
-              Bookings
-            </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-48">
+                  <div className="grid gap-2">
+                    <Button variant="ghost" size="sm" className="justify-start">
+                      Deals
+                    </Button>
+                    <Button variant="ghost" size="sm" className="justify-start">
+                      Support
+                    </Button>
+                    <Button variant="ghost" size="sm" className="justify-start">
+                      Partnership
+                    </Button>
+                    <Button variant="ghost" size="sm" className="justify-start">
+                      For Corporates
+                    </Button>
+                    <Button variant="ghost" size="sm" className="justify-start">
+                      Bookings
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
 
             {isAuthenticated ? (
               <Button
@@ -256,129 +290,130 @@ const TravelPage = () => {
       </header>
 
       {/* Navigation */}
-      <nav className="bg-green-900 text-white py-2 border-t border-green-700">
-        <div className="container mx-auto flex space-x-6 overflow-x-auto">
+      <nav className="bg-green-900 text-white py-2 border-t border-green-700 overflow-x-auto">
+        <div className="container mx-auto flex space-x-2 md:space-x-6 px-2 md:px-4">
           <Button
             variant="ghost"
-            className="text-white hover:bg-green-800 cursor-pointer"
+            className="text-white hover:bg-green-800 cursor-pointer text-xs md:text-sm whitespace-nowrap"
             onClick={() => handleTravelOptionClick("Hotels")}
           >
-            <Hotel className="h-4 w-4 mr-2" /> Hotels
+            <Hotel className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" /> Hotels
           </Button>
           <Button
             variant="ghost"
-            className="text-white hover:bg-green-800 cursor-pointer"
+            className="text-white hover:bg-green-800 cursor-pointer text-xs md:text-sm whitespace-nowrap"
             onClick={() => handleTravelOptionClick("Flights")}
           >
-            <Plane className="h-4 w-4 mr-2" /> Flights
+            <Plane className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" /> Flights
           </Button>
           <Button
             variant="ghost"
-            className="text-white hover:bg-green-800 cursor-pointer"
+            className="text-white hover:bg-green-800 cursor-pointer text-xs md:text-sm whitespace-nowrap"
             onClick={() => handleTravelOptionClick("Trains")}
           >
-            <Train className="h-4 w-4 mr-2" /> Trains
+            <Train className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" /> Trains
           </Button>
           <Button
             variant="ghost"
-            className="text-white hover:bg-green-800 cursor-pointer"
+            className="text-white hover:bg-green-800 cursor-pointer text-xs md:text-sm whitespace-nowrap"
             onClick={() => handleTravelOptionClick("Bus & Travel")}
           >
-            <Bus className="h-4 w-4 mr-2" /> Bus & Travel
+            <Bus className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" /> Bus & Travel
           </Button>
           <Button
             variant="ghost"
-            className="text-white hover:bg-green-800 cursor-pointer"
+            className="text-white hover:bg-green-800 cursor-pointer text-xs md:text-sm whitespace-nowrap"
             onClick={() => handleTravelOptionClick("Airport Transfer")}
           >
             Airport Transfer
           </Button>
           <Button
             variant="ghost"
-            className="text-white hover:bg-green-800 cursor-pointer"
+            className="text-white hover:bg-green-800 cursor-pointer text-xs md:text-sm whitespace-nowrap"
             onClick={() => handleTravelOptionClick("Car Rental")}
           >
-            <Car className="h-4 w-4 mr-2" /> Car Rental
+            <Car className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" /> Car Rental
           </Button>
           <Button
             variant="ghost"
-            className="text-white hover:bg-green-800 cursor-pointer"
+            className="text-white hover:bg-green-800 cursor-pointer text-xs md:text-sm whitespace-nowrap"
             onClick={() => handleTravelOptionClick("Things to Do")}
           >
             Things to Do
           </Button>
           <Button
             variant="ghost"
-            className="text-white hover:bg-green-800 cursor-pointer"
+            className="text-white hover:bg-green-800 cursor-pointer text-xs md:text-sm whitespace-nowrap"
             onClick={() => handleTravelOptionClick("More")}
           >
-            More <ChevronDown className="h-4 w-4 ml-1" />
+            More <ChevronDown className="h-3 w-3 md:h-4 md:w-4 ml-1" />
           </Button>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <div className="container mx-auto px-4 py-12 text-white">
-        <h1 className="text-3xl font-bold text-center mb-8">
+      <div className="container mx-auto px-4 py-8 md:py-12 text-white">
+        <h1 className="text-xl md:text-3xl font-bold text-center mb-6 md:mb-8">
           From Southeast Asia to the World, All Yours.
         </h1>
 
         {/* Travel Options */}
-        <div className="bg-white rounded-lg p-6 shadow-lg">
+        <div className="bg-white rounded-lg p-4 md:p-6 shadow-lg">
           {/* Tabs */}
-          <div className="flex mb-6 space-x-4 overflow-x-auto">
+          <div className="flex mb-4 md:mb-6 space-x-2 md:space-x-4 overflow-x-auto pb-2">
             <Button
               variant="ghost"
-              className="bg-green-100 text-green-600 hover:bg-green-200 cursor-pointer"
+              className="bg-green-100 text-green-600 hover:bg-green-200 cursor-pointer text-xs md:text-sm whitespace-nowrap"
               onClick={() => handleTravelOptionClick("Hotels")}
             >
-              <Hotel className="h-4 w-4 mr-2" /> Hotels
+              <Hotel className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" /> Hotels
             </Button>
             <Button
               variant="ghost"
-              className="bg-green-500 text-white hover:bg-green-600 cursor-pointer"
+              className="bg-green-500 text-white hover:bg-green-600 cursor-pointer text-xs md:text-sm whitespace-nowrap"
               onClick={() => handleTravelOptionClick("Flights")}
             >
-              <Plane className="h-4 w-4 mr-2" /> Flights
+              <Plane className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" /> Flights
             </Button>
             <Button
               variant="ghost"
-              className="text-gray-600 hover:bg-gray-100 cursor-pointer"
+              className="text-gray-600 hover:bg-gray-100 cursor-pointer text-xs md:text-sm whitespace-nowrap"
               onClick={() => handleTravelOptionClick("Trains")}
             >
-              <Train className="h-4 w-4 mr-2" /> Trains
+              <Train className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" /> Trains
             </Button>
             <Button
               variant="ghost"
-              className="text-gray-600 hover:bg-gray-100 cursor-pointer"
+              className="text-gray-600 hover:bg-gray-100 cursor-pointer text-xs md:text-sm whitespace-nowrap"
               onClick={() => handleTravelOptionClick("Bus & Travel")}
             >
-              <Bus className="h-4 w-4 mr-2" /> Bus & Travel
+              <Bus className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" /> Bus &
+              Travel
             </Button>
             <Button
               variant="ghost"
-              className="text-gray-600 hover:bg-gray-100 cursor-pointer"
+              className="text-gray-600 hover:bg-gray-100 cursor-pointer text-xs md:text-sm whitespace-nowrap"
               onClick={() => handleTravelOptionClick("Airport Transfer")}
             >
               Airport Transfer
             </Button>
             <Button
               variant="ghost"
-              className="text-gray-600 hover:bg-gray-100 cursor-pointer"
+              className="text-gray-600 hover:bg-gray-100 cursor-pointer text-xs md:text-sm whitespace-nowrap"
               onClick={() => handleTravelOptionClick("Car Rental")}
             >
-              <Car className="h-4 w-4 mr-2" /> Car Rental
+              <Car className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" /> Car Rental
             </Button>
             <Button
               variant="ghost"
-              className="text-gray-600 hover:bg-gray-100 cursor-pointer"
+              className="text-gray-600 hover:bg-gray-100 cursor-pointer text-xs md:text-sm whitespace-nowrap"
               onClick={() => handleTravelOptionClick("Things to Do")}
             >
               Things to Do
             </Button>
             <Button
               variant="ghost"
-              className="text-gray-600 hover:bg-gray-100 cursor-pointer"
+              className="text-gray-600 hover:bg-gray-100 cursor-pointer text-xs md:text-sm whitespace-nowrap"
               onClick={() => handleTravelOptionClick("More")}
             >
               More
@@ -386,61 +421,77 @@ const TravelPage = () => {
           </div>
 
           {/* Trip Type */}
-          <div className="flex mb-6 space-x-2">
+          <div className="flex mb-4 md:mb-6 space-x-2 overflow-x-auto pb-2">
             <Button
               variant={isRoundTrip ? "default" : "outline"}
-              className="rounded-full text-sm"
+              className="rounded-full text-xs md:text-sm whitespace-nowrap"
               onClick={() => setIsRoundTrip(true)}
             >
               Round-trip
             </Button>
             <Button
               variant={!isRoundTrip ? "default" : "outline"}
-              className="rounded-full text-sm"
+              className="rounded-full text-xs md:text-sm whitespace-nowrap"
               onClick={() => setIsRoundTrip(false)}
             >
               One-way
             </Button>
-            <Button variant="outline" className="rounded-full text-sm">
+            <Button
+              variant="outline"
+              className="rounded-full text-xs md:text-sm whitespace-nowrap"
+            >
               Multi-city
             </Button>
           </div>
 
           {/* Search Form */}
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="relative">
-              <label className="block text-sm text-gray-600 mb-1">From</label>
+              <label className="block text-xs md:text-sm text-gray-600 mb-1">
+                From
+              </label>
               <Input
                 value={fromLocation}
                 onChange={(e) => setFromLocation(e.target.value)}
-                className="pl-10 py-6"
+                className="pl-10 py-4 md:py-6 text-sm md:text-base"
               />
-              <Plane className="absolute left-3 top-9 h-5 w-5 text-gray-400" />
+              <Plane className="absolute left-3 top-8 md:top-9 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
             </div>
 
             <div className="relative">
-              <label className="block text-sm text-gray-600 mb-1">To</label>
+              <label className="block text-xs md:text-sm text-gray-600 mb-1">
+                To
+              </label>
               <Input
                 value={toLocation}
                 onChange={(e) => setToLocation(e.target.value)}
-                className="pl-10 py-6"
+                className="pl-10 py-4 md:py-6 text-sm md:text-base"
               />
-              <Plane className="absolute left-3 top-9 h-5 w-5 text-gray-400" />
+              <Plane className="absolute left-3 top-8 md:top-9 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
             </div>
 
             <Button
               variant="outline"
               size="icon"
-              className="absolute left-1/2 top-32 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-full border-2 border-gray-200 z-10"
+              className="absolute left-1/2 top-32 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-full border-2 border-gray-200 z-10 hidden md:flex"
+              onClick={swapLocations}
+            >
+              <ArrowRightLeft className="h-4 w-4" />
+            </Button>
+
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute right-4 top-24 md:hidden bg-white rounded-full border-2 border-gray-200 z-10"
               onClick={swapLocations}
             >
               <ArrowRightLeft className="h-4 w-4" />
             </Button>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm text-gray-600 mb-1">
+              <label className="block text-xs md:text-sm text-gray-600 mb-1">
                 Departure date
               </label>
               <Popover>
@@ -448,7 +499,7 @@ const TravelPage = () => {
                   <Button
                     variant={"outline"}
                     className={cn(
-                      "w-full justify-start text-left font-normal py-6",
+                      "w-full justify-start text-left font-normal py-4 md:py-6 text-sm md:text-base",
                       !departureDate && "text-muted-foreground",
                     )}
                   >
@@ -473,7 +524,7 @@ const TravelPage = () => {
 
             {isRoundTrip && (
               <div>
-                <label className="block text-sm text-gray-600 mb-1">
+                <label className="block text-xs md:text-sm text-gray-600 mb-1">
                   Return date
                 </label>
                 <Popover>
@@ -481,7 +532,7 @@ const TravelPage = () => {
                     <Button
                       variant={"outline"}
                       className={cn(
-                        "w-full justify-start text-left font-normal py-6",
+                        "w-full justify-start text-left font-normal py-4 md:py-6 text-sm md:text-base",
                         !returnDate && "text-muted-foreground",
                       )}
                     >
@@ -506,16 +557,16 @@ const TravelPage = () => {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
-              <label className="block text-sm text-gray-600 mb-1">
+              <label className="block text-xs md:text-sm text-gray-600 mb-1">
                 Passengers
               </label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant={"outline"}
-                    className="w-full justify-start text-left font-normal py-6"
+                    className="w-full justify-start text-left font-normal py-4 md:py-6 text-sm md:text-base"
                   >
                     <span>{passengers}</span>
                   </Button>
@@ -568,12 +619,14 @@ const TravelPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Class</label>
+              <label className="block text-xs md:text-sm text-gray-600 mb-1">
+                Class
+              </label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant={"outline"}
-                    className="w-full justify-start text-left font-normal py-6"
+                    className="w-full justify-start text-left font-normal py-4 md:py-6 text-sm md:text-base"
                   >
                     <span>{travelClass}</span>
                   </Button>
@@ -617,34 +670,34 @@ const TravelPage = () => {
             </div>
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-center md:justify-end">
             <Button
-              className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-6"
+              className="bg-orange-500 hover:bg-orange-600 text-white px-6 md:px-8 py-4 md:py-6 w-full md:w-auto"
               onClick={handleSearch}
             >
-              <Search className="h-5 w-5 mr-2" />
+              <Search className="h-4 w-4 md:h-5 md:w-5 mr-2" />
               Search
             </Button>
           </div>
         </div>
 
         {/* Promotions Section */}
-        <div className="container mx-auto px-4 py-8 bg-white rounded-t-3xl mt-8">
+        <div className="container mx-auto px-4 py-6 md:py-8 bg-white rounded-t-3xl mt-6 md:mt-8">
           <div className="flex items-center mb-4">
             <div className="text-green-600 mr-2">🎁</div>
-            <h2 className="text-lg font-bold text-green-900">
+            <h2 className="text-base md:text-lg font-bold text-green-900">
               8% New User Coupons
             </h2>
           </div>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-xs md:text-sm text-gray-600 mb-4">
             Valid for First Transaction on Travelintrips App
           </p>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <Card className="p-4 border border-gray-200 rounded-lg">
               <div className="flex justify-between items-start">
                 <div>
-                  <Badge className="bg-green-100 text-green-800 mb-2">
+                  <Badge className="bg-green-100 text-green-800 mb-2 text-xs">
                     Diskon 8% Hotel
                   </Badge>
                   <p className="text-xs text-gray-500">
@@ -654,7 +707,7 @@ const TravelPage = () => {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-green-500 border-green-500"
+                  className="text-green-500 border-green-500 text-xs"
                 >
                   Copy
                 </Button>
@@ -667,7 +720,7 @@ const TravelPage = () => {
             <Card className="p-4 border border-gray-200 rounded-lg">
               <div className="flex justify-between items-start">
                 <div>
-                  <Badge className="bg-red-100 text-red-800 mb-2">
+                  <Badge className="bg-red-100 text-red-800 mb-2 text-xs">
                     Diskon s.d 8% Xperience
                   </Badge>
                   <p className="text-xs text-gray-500">
@@ -677,7 +730,7 @@ const TravelPage = () => {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-green-500 border-green-500"
+                  className="text-green-500 border-green-500 text-xs"
                 >
                   Copy
                 </Button>
@@ -687,10 +740,10 @@ const TravelPage = () => {
               </div>
             </Card>
 
-            <Card className="p-4 border border-gray-200 rounded-lg">
+            <Card className="p-4 border border-gray-200 rounded-lg sm:col-span-2 md:col-span-1">
               <div className="flex justify-between items-start">
                 <div>
-                  <Badge className="bg-green-100 text-green-800 mb-2">
+                  <Badge className="bg-green-100 text-green-800 mb-2 text-xs">
                     Diskon 12% Antar Jemput Bandara
                   </Badge>
                   <p className="text-xs text-gray-500">
@@ -700,7 +753,7 @@ const TravelPage = () => {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-green-500 border-green-500"
+                  className="text-green-500 border-green-500 text-xs"
                 >
                   Copy
                 </Button>
@@ -715,10 +768,10 @@ const TravelPage = () => {
 
       {/* Auth Form Modal */}
       {showAuthForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 md:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold">
+              <h2 className="text-xl md:text-2xl font-bold">
                 {authFormType === "login" ? "Log In" : "Register"}
               </h2>
               <Button

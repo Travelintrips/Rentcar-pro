@@ -114,23 +114,27 @@ const RentCar = () => {
     const fetchVehicles = async () => {
       setIsLoadingModels(true);
       try {
-        const { data, error } = await supabase
-          .from("vehicles")
-          .select("*")
-          .order("make");
+        // Fetch vehicle data
+        let query = supabase.from("vehicles").select("*");
+
+        if (typeof query.order === "function") {
+          query = query.order("make");
+        }
+
+        const { data, error } = await query;
 
         if (error) {
           console.error("Error fetching vehicles:", error);
+          setCarModels([]);
           return;
         }
 
         if (!data || data.length === 0) {
           setCarModels([]);
-          setIsLoadingModels(false);
           return;
         }
 
-        // Group vehicles by model
+        // Group by model
         const groupedByModel = data.reduce((acc, vehicle) => {
           const modelKey =
             `${vehicle.make || ""} ${vehicle.model || ""}`.trim();
@@ -146,7 +150,6 @@ const RentCar = () => {
             };
           }
 
-          // Transform vehicle data
           const transformedVehicle = {
             id: vehicle.id.toString(),
             name: modelKey || "Unknown Vehicle",
@@ -177,7 +180,6 @@ const RentCar = () => {
 
           acc[modelKey].vehicles.push(transformedVehicle);
 
-          // Count available vehicles
           if (vehicle.available !== false) {
             acc[modelKey].availableCount += 1;
           }
@@ -185,34 +187,16 @@ const RentCar = () => {
           return acc;
         }, {});
 
-        // Convert to array
         const modelsArray = Object.values(groupedByModel);
         setCarModels(modelsArray);
 
-        // If modelName is provided in URL, find and select that model
+        // If modelName exists in URL, find and select the model
         if (modelName) {
           const decodedModelName = decodeURIComponent(modelName);
-          console.log("Looking for model:", decodedModelName);
-          console.log(
-            "Available models:",
-            modelsArray.map((m) => m.modelName),
-          );
-
-          // Use a more flexible matching approach to handle extra spaces
           const foundModel = modelsArray.find((model) => {
-            // Normalize both strings by trimming and converting to lowercase
             const normalizedModelName = model.modelName.toLowerCase().trim();
             const normalizedUrlName = decodedModelName.toLowerCase().trim();
 
-            // Log the comparison for debugging
-            console.log(
-              `Comparing: '${normalizedModelName}' with '${normalizedUrlName}'`,
-            );
-
-            // Try exact match first
-            if (normalizedModelName === normalizedUrlName) return true;
-
-            // Try with normalized spaces (replace multiple spaces with single space)
             const furtherNormalizedModelName = normalizedModelName.replace(
               /\s+/g,
               " ",
@@ -230,11 +214,6 @@ const RentCar = () => {
             setShowModelDetail(true);
           } else {
             console.log(`No model found matching: "${decodedModelName}"`);
-            // Log available models for debugging
-            console.log(
-              "Available models:",
-              modelsArray.map((m) => m.modelName),
-            );
           }
         }
       } catch (error) {
