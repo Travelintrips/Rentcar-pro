@@ -105,8 +105,8 @@ const TravelPage = () => {
         navigate("/airport-transfer");
         break;
       case "Car Rental":
-        window.location.href =
-          "https://amazing-cannon2-qguam.view-3.tempo-dev.app/rentcar";
+      case "Car Rental":
+        navigate("/rentcar");
         break;
       case "Things to Do":
         navigate("/things-to-do");

@@ -109,7 +109,13 @@ function App() {
         {import.meta.env.VITE_TEMPO ? (
           <>
             {/* Use tempo-routes for storyboards */}
-            {useRoutes(routes)}
+            {useRoutes([
+              {
+                path: "/",
+                element: <TravelPage />,
+              },
+              ...routes,
+            ])}
 
             <Routes>
               {/* Payment Routes - Define these first for higher priority */}
