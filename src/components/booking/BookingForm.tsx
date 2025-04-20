@@ -143,23 +143,42 @@ const BookingForm: React.FC<BookingFormProps> = ({
     const fetchVehicles = async () => {
       setIsLoadingVehicles(true);
       try {
-        const { data, error } = await supabase
-          .from("vehicles")
-          .select("*")
-          .eq("available", true);
+        // Use default vehicle instead of trying to fetch from Supabase
+        // This is a temporary solution until Supabase connection is fixed
+        console.log(
+          "Using default vehicle data instead of fetching from Supabase",
+        );
 
-        if (error) throw error;
+        // Create an array of sample vehicles
+        const sampleVehicles = [
+          defaultVehicle,
+          {
+            id: "2",
+            make: "Honda",
+            model: "CR-V",
+            year: 2023,
+            category: "SUV",
+            price: 450000,
+            image:
+              "https://images.unsplash.com/photo-1568844293986-ca9c5c1bc2e8?w=800&q=80",
+          },
+          {
+            id: "3",
+            make: "Mitsubishi",
+            model: "Xpander",
+            year: 2022,
+            category: "MPV",
+            price: 380000,
+            image:
+              "https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=800&q=80",
+          },
+        ];
 
-        if (data && data.length > 0) {
-          setVehicles(
-            data.map((vehicle) => ({
-              ...vehicle,
-              name: `${vehicle.make} ${vehicle.model} (${vehicle.year})`, // For backward compatibility
-            })),
-          );
-        }
+        setVehicles(sampleVehicles);
       } catch (error) {
-        console.error("Error fetching vehicles:", error);
+        console.error("Error setting up vehicles:", error);
+        // Use default vehicle on error
+        setVehicles([defaultVehicle]);
       } finally {
         setIsLoadingVehicles(false);
       }
@@ -435,7 +454,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
 
       <CardContent>
         {selectedVehicle && (
-          <div className="mb-6 p-4 bg-muted rounded-lg flex items-center gap-4">
+          <div className="mb-6 p-4 bg-muted rounded-lg flex flex-col sm:flex-row items-center gap-4">
             <div className="w-20 h-20 overflow-hidden rounded-md">
               <img
                 src={
@@ -450,7 +469,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
                 }}
               />
             </div>
-            <div>
+            <div className="text-center sm:text-left">
               <h3 className="font-bold text-lg">
                 {vehicleToUse.make} {vehicleToUse.model}{" "}
                 {vehicleToUse.year && `(${vehicleToUse.year})`}
@@ -467,12 +486,13 @@ const BookingForm: React.FC<BookingFormProps> = ({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {step === 1 && (
               <div className="space-y-6">
-                <div className="flex flex-col md:flex-row gap-6">
+                {/* Date Selection Section - Refactored for responsive grid layout */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <FormField
                     control={form.control}
                     name="startDate"
                     render={({ field }) => (
-                      <FormItem className="flex-1">
+                      <FormItem className="w-full">
                         <FormLabel>Pickup Date</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
@@ -512,7 +532,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
                     control={form.control}
                     name="endDate"
                     render={({ field }) => (
-                      <FormItem className="flex-1">
+                      <FormItem className="w-full">
                         <FormLabel>Return Date</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
@@ -551,12 +571,13 @@ const BookingForm: React.FC<BookingFormProps> = ({
                   />
                 </div>
 
-                <div className="flex flex-col md:flex-row gap-6">
+                {/* Time Selection Section - Refactored for responsive grid layout */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <FormField
                     control={form.control}
                     name="pickupTime"
                     render={({ field }) => (
-                      <FormItem className="flex-1">
+                      <FormItem className="w-full">
                         <FormLabel>Pickup Time</FormLabel>
                         <FormControl>
                           <Input type="time" {...field} />
@@ -570,7 +591,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
                     control={form.control}
                     name="returnTime"
                     render={({ field }) => (
-                      <FormItem className="flex-1">
+                      <FormItem className="w-full">
                         <FormLabel>Return Time</FormLabel>
                         <FormControl>
                           <Input type="time" {...field} />
@@ -591,21 +612,21 @@ const BookingForm: React.FC<BookingFormProps> = ({
                         <RadioGroup
                           onValueChange={field.onChange}
                           defaultValue={field.value}
-                          className="flex flex-col space-y-1"
+                          className="grid grid-cols-1 sm:grid-cols-2 gap-2"
                         >
-                          <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormItem className="flex items-center space-x-3 space-y-0 p-3 border rounded-md hover:bg-muted/50 transition-colors">
                             <FormControl>
                               <RadioGroupItem value="self" />
                             </FormControl>
-                            <FormLabel className="font-normal">
+                            <FormLabel className="font-normal cursor-pointer w-full">
                               Self-drive
                             </FormLabel>
                           </FormItem>
-                          <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormItem className="flex items-center space-x-3 space-y-0 p-3 border rounded-md hover:bg-muted/50 transition-colors">
                             <FormControl>
                               <RadioGroupItem value="provided" />
                             </FormControl>
-                            <FormLabel className="font-normal">
+                            <FormLabel className="font-normal cursor-pointer w-full">
                               With driver (+Rp 150.000/day)
                             </FormLabel>
                           </FormItem>
@@ -630,31 +651,31 @@ const BookingForm: React.FC<BookingFormProps> = ({
                         <RadioGroup
                           onValueChange={field.onChange}
                           defaultValue={field.value}
-                          className="flex flex-col space-y-1"
+                          className="grid grid-cols-1 sm:grid-cols-3 gap-2"
                         >
-                          <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormItem className="flex items-center space-x-3 space-y-0 p-3 border rounded-md hover:bg-muted/50 transition-colors">
                             <FormControl>
                               <RadioGroupItem value="cash" />
                             </FormControl>
-                            <FormLabel className="font-normal flex items-center">
+                            <FormLabel className="font-normal flex items-center cursor-pointer w-full">
                               <Banknote className="mr-2 h-4 w-4" />
                               Cash
                             </FormLabel>
                           </FormItem>
-                          <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormItem className="flex items-center space-x-3 space-y-0 p-3 border rounded-md hover:bg-muted/50 transition-colors">
                             <FormControl>
                               <RadioGroupItem value="bank" />
                             </FormControl>
-                            <FormLabel className="font-normal flex items-center">
+                            <FormLabel className="font-normal flex items-center cursor-pointer w-full">
                               <Building2 className="mr-2 h-4 w-4" />
                               Bank Transfer
                             </FormLabel>
                           </FormItem>
-                          <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormItem className="flex items-center space-x-3 space-y-0 p-3 border rounded-md hover:bg-muted/50 transition-colors">
                             <FormControl>
                               <RadioGroupItem value="card" />
                             </FormControl>
-                            <FormLabel className="font-normal flex items-center">
+                            <FormLabel className="font-normal flex items-center cursor-pointer w-full">
                               <CreditCard className="mr-2 h-4 w-4" />
                               Credit/Debit Card
                             </FormLabel>
@@ -676,21 +697,21 @@ const BookingForm: React.FC<BookingFormProps> = ({
                         <RadioGroup
                           onValueChange={field.onChange}
                           defaultValue={field.value}
-                          className="flex flex-col space-y-1"
+                          className="grid grid-cols-1 sm:grid-cols-2 gap-2"
                         >
-                          <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormItem className="flex items-center space-x-3 space-y-0 p-3 border rounded-md hover:bg-muted/50 transition-colors">
                             <FormControl>
                               <RadioGroupItem value="full" />
                             </FormControl>
-                            <FormLabel className="font-normal">
+                            <FormLabel className="font-normal cursor-pointer w-full">
                               Full Payment ({formatCurrency(calculateTotal())})
                             </FormLabel>
                           </FormItem>
-                          <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormItem className="flex items-center space-x-3 space-y-0 p-3 border rounded-md hover:bg-muted/50 transition-colors">
                             <FormControl>
                               <RadioGroupItem value="partial" />
                             </FormControl>
-                            <FormLabel className="font-normal">
+                            <FormLabel className="font-normal cursor-pointer w-full">
                               Partial Payment (30% Deposit:{" "}
                               {formatCurrency(calculateDeposit())})
                             </FormLabel>
@@ -768,29 +789,38 @@ const BookingForm: React.FC<BookingFormProps> = ({
               </div>
             )}
 
-            <div className="flex justify-between mt-6">
+            <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-0 mt-6">
               {step === 1 ? (
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => navigate(-1)}
-                  className="flex items-center gap-1"
+                  className="flex items-center justify-center gap-1 w-full sm:w-auto"
                 >
                   <ArrowLeft className="h-4 w-4" /> Back
                 </Button>
               ) : (
-                <Button type="button" variant="outline" onClick={prevStep}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={prevStep}
+                  className="w-full sm:w-auto"
+                >
                   Back
                 </Button>
               )}
 
               {step === 1 ? (
                 isAuthenticated ? (
-                  <Button type="button" className="ml-auto" onClick={nextStep}>
+                  <Button
+                    type="button"
+                    className="w-full sm:w-auto sm:ml-auto"
+                    onClick={nextStep}
+                  >
                     Next <ChevronRight className="ml-2 h-4 w-4" />
                   </Button>
                 ) : (
-                  <div className="flex gap-2 ml-auto">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:ml-auto">
                     <Button
                       type="button"
                       variant="outline"
@@ -799,6 +829,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
                           state: { openAuthForm: true, initialTab: "login" },
                         })
                       }
+                      className="w-full sm:w-auto"
                     >
                       Sign In
                     </Button>
@@ -809,12 +840,13 @@ const BookingForm: React.FC<BookingFormProps> = ({
                           state: { openAuthForm: true, initialTab: "register" },
                         })
                       }
+                      className="w-full sm:w-auto"
                     >
                       Register
                     </Button>
                     <Button
                       type="button"
-                      className="ml-2"
+                      className="w-full sm:w-auto sm:ml-2"
                       onClick={() => {
                         alert(
                           "Please sign in or register to continue with your booking.",
@@ -828,7 +860,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
               ) : (
                 <Button
                   type="submit"
-                  className="ml-auto"
+                  className="w-full sm:w-auto sm:ml-auto"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Processing..." : "Complete Booking"}

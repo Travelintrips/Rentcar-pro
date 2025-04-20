@@ -17,28 +17,3 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  define: {
-    // Make sure environment variables are properly exposed to the client
-    "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(
-      process.env.VITE_SUPABASE_URL,
-    ),
-    "import.meta.env.VITE_SUPABASE_ANON_KEY": JSON.stringify(
-      process.env.VITE_SUPABASE_ANON_KEY,
-    ),
-  },
-  server: {
-    // @ts-ignore
-    allowedHosts: true,
-    hmr: {
-      protocol: process.env.TEMPO === "true" ? "wss" : "ws",
-    },
-    fs: {
-      strict: false,
-    },
-  },
-  build: {
-    commonjsOptions: {
-      transformMixedEsModules: true,
-    },
-  },
-});

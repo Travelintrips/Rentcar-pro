@@ -27,6 +27,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/lib/supabase";
 import { Badge } from "./ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+import { useVehicleData } from "@/hooks/useVehicleData";
 
 interface Vehicle {
   id: string;
@@ -48,17 +50,20 @@ interface Vehicle {
   vehicle_type_name?: string;
 }
 
-interface CarModel {
-  modelName: string;
-  availableCount: number;
-  imageUrl: string;
-  vehicles: Vehicle[];
-}
-
 const RentCar = () => {
   const navigate = useNavigate();
   const { modelName } = useParams<{ modelName: string }>();
   const { t, i18n } = useTranslation();
+  const { isAuthenticated, userRole, userEmail, signOut } = useAuth();
+
+  // Use the custom hook for vehicle data
+  const {
+    carModels,
+    isLoadingModels,
+    selectedModel,
+    setSelectedModel,
+    error: vehicleError,
+  } = useVehicleData(modelName);
 
   // Set document title based on language
   useEffect(() => {
@@ -68,14 +73,44 @@ const RentCar = () => {
   // Check for auth requirements from navigation state
   useEffect(() => {
     const location = window.location;
+    console.log("Checking auth requirements, location state:", location.state);
+
+    // Check if user is already authenticated from localStorage
+    const authUserStr = localStorage.getItem("auth_user");
+    if (authUserStr) {
+      try {
+        const authUser = JSON.parse(authUserStr);
+        console.log("Found auth user in localStorage:", authUser);
+        if (authUser && authUser.id) {
+          // User is already authenticated, no need to show auth form
+          console.log("User already authenticated, hiding auth form");
+          setShowAuthForm(false);
+          return; // Exit early if user is authenticated
+        }
+      } catch (e) {
+        console.error("Error parsing auth_user from localStorage:", e);
+      }
+    } else {
+      console.log("No auth_user found in localStorage");
+    }
+
+    // Only check navigation state if user is not already authenticated
     if (location.state && location.state.requireAuth) {
+      console.log("Auth required from navigation state");
       setShowAuthForm(true);
-      setAuthFormType("register");
+      setAuthFormType(location.state.authType || "register");
     }
   }, []);
 
+  // Additional check for authentication status changes
+  useEffect(() => {
+    // If user becomes authenticated, hide the auth form
+    if (isAuthenticated) {
+      setShowAuthForm(false);
+    }
+  }, [isAuthenticated]);
+
   const [theme, setTheme] = useState<"light" | "dark">("light");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [activeTab, setActiveTab] = useState("vehicles");
   const [bookingData, setBookingData] = useState<any>(null);
@@ -96,172 +131,14 @@ const RentCar = () => {
     "login",
   );
 
-  // New state for car models
-  const [carModels, setCarModels] = useState<CarModel[]>([]);
-  const [isLoadingModels, setIsLoadingModels] = useState(true);
+  // New state for search
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedModel, setSelectedModel] = useState<CarModel | null>(null);
   const [showModelDetail, setShowModelDetail] = useState(false);
 
   const toggleTheme = () => {
     setTheme(theme === "light" ? "dark" : "light");
     // In a real implementation, you would apply the theme to the document
     // document.documentElement.classList.toggle('dark');
-  };
-
-  // Fetch vehicles and group them by model
-  useEffect(() => {
-    const fetchVehicles = async () => {
-      setIsLoadingModels(true);
-      try {
-        const { data, error } = await supabase
-          .from("vehicles")
-          .select("*")
-          .order("make");
-
-        if (error) {
-          console.error("Error fetching vehicles:", error);
-          return;
-        }
-
-        if (!data || data.length === 0) {
-          setCarModels([]);
-          setIsLoadingModels(false);
-          return;
-        }
-
-        // Group vehicles by model
-        const groupedByModel = data.reduce((acc, vehicle) => {
-          const modelKey =
-            `${vehicle.make || ""} ${vehicle.model || ""}`.trim();
-
-          if (!acc[modelKey]) {
-            acc[modelKey] = {
-              modelName: modelKey,
-              availableCount: 0,
-              imageUrl:
-                vehicle.image ||
-                `/images/cover/${modelKey.toLowerCase().replace(/\s+/g, "-")}.jpg`,
-              vehicles: [],
-            };
-          }
-
-          // Transform vehicle data
-          const transformedVehicle = {
-            id: vehicle.id.toString(),
-            name: modelKey || "Unknown Vehicle",
-            type: vehicle.type || "sedan",
-            price: vehicle.price || 0,
-            image:
-              vehicle.image ||
-              "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&q=80",
-            seats: vehicle.seats || 4,
-            transmission: vehicle.transmission || "automatic",
-            fuelType: vehicle.fuel_type || "petrol",
-            available: vehicle.available !== false,
-            features: vehicle.features
-              ? typeof vehicle.features === "string"
-                ? JSON.parse(vehicle.features)
-                : Array.isArray(vehicle.features)
-                  ? vehicle.features
-                  : ["AC"]
-              : ["AC"],
-            vehicle_type_id: vehicle.vehicle_type_id,
-            vehicle_type_name: vehicle.vehicle_type_name,
-            make: vehicle.make,
-            model: vehicle.model,
-            year: vehicle.year,
-            color: vehicle.color,
-            license_plate: vehicle.license_plate,
-          };
-
-          acc[modelKey].vehicles.push(transformedVehicle);
-
-          // Count available vehicles
-          if (vehicle.available !== false) {
-            acc[modelKey].availableCount += 1;
-          }
-
-          return acc;
-        }, {});
-
-        // Convert to array
-        const modelsArray = Object.values(groupedByModel);
-        setCarModels(modelsArray);
-
-        // If modelName is provided in URL, find and select that model
-        if (modelName) {
-          const decodedModelName = decodeURIComponent(modelName);
-          console.log("Looking for model:", decodedModelName);
-          console.log(
-            "Available models:",
-            modelsArray.map((m) => m.modelName),
-          );
-
-          // Use a more flexible matching approach to handle extra spaces
-          const foundModel = modelsArray.find((model) => {
-            // Normalize both strings by trimming and converting to lowercase
-            const normalizedModelName = model.modelName.toLowerCase().trim();
-            const normalizedUrlName = decodedModelName.toLowerCase().trim();
-
-            // Log the comparison for debugging
-            console.log(
-              `Comparing: '${normalizedModelName}' with '${normalizedUrlName}'`,
-            );
-
-            // Try exact match first
-            if (normalizedModelName === normalizedUrlName) return true;
-
-            // Try with normalized spaces (replace multiple spaces with single space)
-            const furtherNormalizedModelName = normalizedModelName.replace(
-              /\s+/g,
-              " ",
-            );
-            const furtherNormalizedUrlName = normalizedUrlName.replace(
-              /\s+/g,
-              " ",
-            );
-
-            return furtherNormalizedModelName === furtherNormalizedUrlName;
-          });
-
-          if (foundModel) {
-            setSelectedModel(foundModel);
-            setShowModelDetail(true);
-          } else {
-            console.log(`No model found matching: "${decodedModelName}"`);
-            // Log available models for debugging
-            console.log(
-              "Available models:",
-              modelsArray.map((m) => m.modelName),
-            );
-          }
-        }
-      } catch (error) {
-        console.error("Error processing vehicles data:", error);
-      } finally {
-        setIsLoadingModels(false);
-      }
-    };
-
-    fetchVehicles();
-  }, [modelName]);
-
-  // Function to handle authentication state
-  const handleAuthStateChange = (state: boolean) => {
-    setIsAuthenticated(state);
-
-    // Clear user role from local storage when logging out
-    if (!state) {
-      localStorage.removeItem("userRole");
-      localStorage.removeItem("userId");
-    } else {
-      // Check if user is admin and redirect to admin panel
-      const userRole = localStorage.getItem("userRole");
-      if (userRole === "Admin") {
-        console.log("Admin user detected, should show admin panel");
-      }
-    }
   };
 
   // Handle vehicle selection
@@ -291,7 +168,7 @@ const RentCar = () => {
   };
 
   // Handle navigation to model detail page
-  const handleViewModelDetail = (model: CarModel) => {
+  const handleViewModelDetail = (model: any) => {
     if (!isAuthenticated) {
       // Store return path for after authentication
       const encodedModelName = encodeURIComponent(model.modelName.trim());
@@ -388,6 +265,18 @@ const RentCar = () => {
     setTotalAmount(0);
   };
 
+  // Handle user logout
+  const handleLogout = async () => {
+    console.log("Logging out user");
+    const success = await signOut();
+    if (success) {
+      console.log("Logout successful, navigating to TravelPage");
+      navigate("/"); // Navigate to TravelPage
+    } else {
+      console.error("Logout failed");
+    }
+  };
+
   return (
     <div
       className={`min-h-screen bg-background ${theme === "dark" ? "dark" : ""}`}
@@ -478,28 +367,21 @@ const RentCar = () => {
 
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
-                {isAuthenticated &&
-                  localStorage.getItem("userRole") === "Admin" && (
-                    <Button
-                      variant="default"
-                      className="flex items-center gap-2 bg-gradient-to-r from-primary-tosca to-primary-dark hover:from-primary-dark hover:to-primary-tosca"
-                      onClick={() => navigate("/admin")}
-                    >
-                      <User className="h-4 w-4" />
-                      {t("navbar.adminPanel")}
-                    </Button>
-                  )}
+                {userRole === "Admin" && (
+                  <Button
+                    variant="default"
+                    className="flex items-center gap-2 bg-gradient-to-r from-primary-tosca to-primary-dark hover:from-primary-dark hover:to-primary-tosca"
+                    onClick={() => navigate("/admin")}
+                  >
+                    <User className="h-4 w-4" />
+                    {t("navbar.adminPanel")}
+                  </Button>
+                )}
                 <Button variant="outline" className="flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  {t("navbar.myAccount")}
+                  {userEmail ? userEmail.split("@")[0] : t("navbar.myAccount")}
                 </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    handleAuthStateChange(false);
-                    navigate("/");
-                  }}
-                >
+                <Button variant="destructive" onClick={handleLogout}>
                   {t("navbar.signOut")}
                 </Button>
               </div>
@@ -508,8 +390,9 @@ const RentCar = () => {
                 <Button
                   variant="default"
                   onClick={() => {
-                    setShowAuthForm(true);
+                    console.log("Sign In button clicked");
                     setAuthFormType("login");
+                    setShowAuthForm(true);
                   }}
                 >
                   {t("navbar.signIn")}
@@ -517,8 +400,9 @@ const RentCar = () => {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setShowAuthForm(true);
+                    console.log("Register button clicked");
                     setAuthFormType("register");
+                    setShowAuthForm(true);
                   }}
                 >
                   {t("navbar.register", "Register")}
@@ -592,7 +476,7 @@ const RentCar = () => {
 
       {/* Main Content */}
       <section className="py-12 container mx-auto px-4">
-        {showAuthForm ? (
+        {showAuthForm && !isAuthenticated ? (
           <div className="max-w-md mx-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold">
@@ -626,7 +510,7 @@ const RentCar = () => {
               <CardContent className="pt-6">
                 <AuthForm
                   onAuthStateChange={(state) => {
-                    handleAuthStateChange(state);
+                    console.log("Auth state changed to:", state);
 
                     // If user successfully authenticated and there was a return path
                     if (state && window.location.state) {
@@ -641,9 +525,18 @@ const RentCar = () => {
                         navigate(returnPath, { state: returnState });
                       }
                     }
+
+                    // Always close the auth form when authentication is successful
+                    if (state) {
+                      console.log("Authentication successful, closing form");
+                      setShowAuthForm(false);
+                    }
                   }}
                   initialTab={authFormType}
-                  onClose={() => setShowAuthForm(false)}
+                  onClose={() => {
+                    console.log("Auth form closed");
+                    setShowAuthForm(false);
+                  }}
                 />
               </CardContent>
             </Card>
@@ -799,6 +692,14 @@ const RentCar = () => {
             {isLoadingModels ? (
               <div className="flex justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+              </div>
+            ) : vehicleError ? (
+              <div className="text-center py-12">
+                <Car className="h-16 w-16 mx-auto text-muted-foreground opacity-30" />
+                <h3 className="text-xl font-medium mt-4">
+                  Error loading vehicles
+                </h3>
+                <p className="text-muted-foreground mt-2">{vehicleError}</p>
               </div>
             ) : carModels.length === 0 ? (
               <div className="text-center py-12">

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+{
+  /*import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Sun,
@@ -391,9 +392,13 @@ const Home = () => {
   return (
     <div
       className={`min-h-screen bg-background ${theme === "dark" ? "dark" : ""}`}
-    >
-      {/* Navbar */}
-      <nav className="sticky top-0 z-10 w-full bg-background/95 backdrop-blur-sm border-b border-border/60 py-4 px-4 shadow-sm">
+    > */
+}
+{
+  /* Navbar */
+}
+{
+  /*    <nav className="sticky top-0 z-10 w-full bg-background/95 backdrop-blur-sm border-b border-border/60 py-4 px-4 shadow-sm">
         <div className="container mx-auto flex justify-between items-center">
           <div
             className="flex items-center space-x-3 cursor-pointer"
@@ -527,10 +532,14 @@ const Home = () => {
             )}
           </div>
         </div>
-      </nav>
+      </nav>*/
+}
 
-      {/* Hero Section */}
-      <section className="py-16 md:py-24 bg-gradient-to-b from-muted to-background">
+{
+  /* Hero Section */
+}
+{
+  /*    <section className="py-16 md:py-24 bg-gradient-to-b from-muted to-background">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -588,10 +597,14 @@ const Home = () => {
             </div>
           </motion.div>
         </div>
-      </section>
+      </section>*/
+}
 
-      {/* Main Content */}
-      <section className="py-12 container mx-auto px-4">
+{
+  /* Main Content */
+}
+{
+  /*    <section className="py-12 container mx-auto px-4">
         {showAuthForm ? (
           <div className="max-w-md mx-auto">
             <div className="flex justify-between items-center mb-4">
@@ -777,9 +790,13 @@ const Home = () => {
                 </PopoverTrigger>
                 <PopoverContent className="w-80 shadow-lg border border-border/60">
                   <div className="space-y-4">
-                    <h4 className="font-medium text-lg">Filter Options</h4>
-                    {/* Filter options would go here */}
-                    <p className="text-sm text-muted-foreground">
+                    <h4 className="font-medium text-lg">Filter Options</h4>*/
+}
+{
+  /* Filter options would go here */
+}
+{
+  /*        <p className="text-sm text-muted-foreground">
                       Filter options coming soon
                     </p>
                   </div>
@@ -880,9 +897,13 @@ const Home = () => {
                   <TabsContent value="payment" className="mt-6">
                     {bookingData && showPayment && (
                       <Card className="w-full max-w-2xl mx-auto">
-                        <CardContent className="pt-6">
-                          {/* Payment content remains the same */}
-                        </CardContent>
+                        <CardContent className="pt-6">*/
+}
+{
+  /* Payment content remains the same */
+}
+{
+  /*}         </CardContent>
                       </Card>
                     )}
                   </TabsContent>
@@ -891,10 +912,14 @@ const Home = () => {
             )}
           </div>
         )}
-      </section>
+      </section>*/
+}
 
-      {/* Features Section */}
-      <section className="py-16 md:py-24 bg-gradient-to-b from-background to-muted/50">
+{
+  /* Features Section */
+}
+{
+  /*    <section className="py-16 md:py-24 bg-gradient-to-b from-background to-muted/50">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-16 relative">
             <span className="relative z-10">{t("whyChoose.title")}</span>
@@ -948,10 +973,13 @@ const Home = () => {
             </Card>
           </div>
         </div>
-      </section>
+      </section>*/
+}
 
-      {/* Footer */}
-      <footer className="bg-muted/30 border-t border-border py-12">
+{
+  /* Footer */
+}
+/*   <footer className="bg-muted/30 border-t border-border py-12">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-3 mb-6 md:mb-0">
@@ -973,4 +1001,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default Home;*/

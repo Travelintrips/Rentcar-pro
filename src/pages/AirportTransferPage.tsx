@@ -21,7 +21,7 @@ export default function AirportTransferPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-blue-500 to-blue-700">
       {/* Header with back button */}
-      <header className="p-4 flex justify-between items-center">
+      <header className="p-4 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
         <Button
           variant="outline"
           onClick={() => navigate(-1)}

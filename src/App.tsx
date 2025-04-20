@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense } from "react";
 import {
   useRoutes,
   Routes,
@@ -29,7 +29,10 @@ import ChecklistManagement from "./components/admin/ChecklistManagement";
 import DamageManagement from "./components/admin/DamageManagement";
 import VehicleInventory from "./components/admin/VehicleInventory";
 import AirportTransferPage from "./pages/AirportTransferPage";
-import { supabase } from "./lib/supabase";
+import DriverMitraPage from "./pages/DriverMitraPage";
+import DriverPerusahaanPage from "./pages/DriverPerusahaanPage";
+import DriverProfile from "./components/DriverProfile";
+import { useAuth } from "./hooks/useAuth";
 
 // Define window.__TEMPO_ROUTES__ to avoid undefined errors
 declare global {
@@ -39,50 +42,17 @@ declare global {
 }
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Check if user is already authenticated
-    const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        setIsAuthenticated(true);
-        const storedRole = localStorage.getItem("userRole");
-        setUserRole(storedRole);
-      }
-      setIsLoading(false);
-    };
-
-    checkAuth();
-
-    // Listen for auth changes
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === "SIGNED_IN" && session) {
-          setIsAuthenticated(true);
-          const storedRole = localStorage.getItem("userRole");
-          setUserRole(storedRole);
-        } else if (event === "SIGNED_OUT") {
-          setIsAuthenticated(false);
-          setUserRole(null);
-        }
-      },
-    );
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
+  const { isAuthenticated, userRole, isLoading } = useAuth();
 
   // Protected route component
   const ProtectedRoute = ({
     children,
     requiredRole,
+    allowedRoles,
   }: {
     children: JSX.Element;
     requiredRole?: string;
+    allowedRoles?: string[];
   }) => {
     if (isLoading) {
       return <div>Loading...</div>;
@@ -92,9 +62,18 @@ function App() {
       return <Navigate to="/" />;
     }
 
+    // Check if user has the specific required role
     if (requiredRole && userRole !== requiredRole) {
       console.log(
         `Access denied: User role ${userRole} does not match required role ${requiredRole}`,
+      );
+      return <Navigate to="/" />;
+    }
+
+    // Check if user has one of the allowed roles
+    if (allowedRoles && !allowedRoles.includes(userRole || "")) {
+      console.log(
+        `Access denied: User role ${userRole} is not in allowed roles [${allowedRoles.join(", ")}]`,
       );
       return <Navigate to="/" />;
     }
@@ -103,8 +82,14 @@ function App() {
   };
 
   return (
-    <div>
-      <Suspense fallback={<p>Loading...</p>}>
+    <div className="min-h-screen w-full">
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center h-screen">
+            <p>Loading...</p>
+          </div>
+        }
+      >
         {/* Conditionally render either tempoRoutes or manual Routes */}
         {import.meta.env.VITE_TEMPO ? (
           <>
@@ -140,10 +125,16 @@ function App() {
                 path="/airport-transfer"
                 element={<AirportTransferPage />}
               />
+              <Route path="/driver-mitra" element={<DriverMitraPage />} />
               <Route
-                path="/admin"
+                path="/driver-perusahaan"
+                element={<DriverPerusahaanPage />}
+              />
+              <Route path="/driver-profile" element={<DriverProfile />} />
+              <Route
+                path="/admin/*"
                 element={
-                  <ProtectedRoute requiredRole="Admin">
+                  <ProtectedRoute allowedRoles={["Admin", "Staff"]}>
                     <AdminLayout />
                   </ProtectedRoute>
                 }
@@ -191,11 +182,17 @@ function App() {
               element={<BookingPage />}
             />
             <Route path="/airport-transfer" element={<AirportTransferPage />} />
+            <Route path="/driver-mitra" element={<DriverMitraPage />} />
+            <Route
+              path="/driver-perusahaan"
+              element={<DriverPerusahaanPage />}
+            />
+            <Route path="/driver-profile" element={<DriverProfile />} />
 
             <Route
-              path="/admin"
+              path="/admin/*"
               element={
-                <ProtectedRoute requiredRole="Admin">
+                <ProtectedRoute allowedRoles={["Admin", "Staff"]}>
                   <AdminLayout />
                 </ProtectedRoute>
               }
