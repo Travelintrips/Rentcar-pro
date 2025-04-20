@@ -25,6 +25,7 @@ import {
   ArrowRightLeft,
   Globe,
   ChevronDown,
+  User,
 } from "lucide-react";
 import AuthForm from "@/components/auth/AuthForm";
 
@@ -46,15 +47,75 @@ const TravelPage = () => {
   // Check authentication status
   useEffect(() => {
     const checkAuth = async () => {
+      // First check localStorage for shared authentication
+      const authUser = localStorage.getItem("auth_user");
+      if (authUser) {
+        setIsAuthenticated(true);
+        // If authenticated, make sure auth form is closed
+        setShowAuthForm(false);
+        return;
+      }
+
+      // If not in localStorage, check Supabase session
       const { data } = await supabase.auth.getSession();
       setIsAuthenticated(!!data.session);
+
+      // If authenticated, make sure auth form is closed
+      if (data.session) {
+        setShowAuthForm(false);
+      }
+
+      // If authenticated via Supabase but not in localStorage, store the data
+      if (data.session) {
+        const userId = data.session.user.id;
+        localStorage.setItem("userId", userId);
+
+        // Try to get user role from metadata or default to "Customer"
+        const userRole = data.session.user.user_metadata?.role || "Customer";
+        localStorage.setItem("userRole", userRole);
+
+        // Store email if available
+        if (data.session.user.email) {
+          localStorage.setItem("userEmail", data.session.user.email);
+        }
+
+        // ✅ Fetch nama lengkap dari tabel customers
+        const { data: customerData } = await supabase
+          .from("customers")
+          .select("name")
+          .eq("user_id", userId)
+          .single();
+
+        const userName =
+          authUser?.name ||
+          localStorage.getItem("userName") ||
+          authUser?.email?.split("@")[0] ||
+          "User";
+
+        localStorage.setItem("userName", userName);
+
+        // Store in auth_user for shared authentication
+        const userData = {
+          id: userId,
+          role: userRole,
+          email: data.session.user.email || "",
+          name: userName,
+        };
+        localStorage.setItem("auth_user", JSON.stringify(userData));
+      }
     };
     checkAuth();
 
     // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        setIsAuthenticated(!!session);
+        const newAuthState = !!session;
+        setIsAuthenticated(newAuthState);
+
+        // If user becomes authenticated, hide the auth form
+        if (newAuthState) {
+          setShowAuthForm(false);
+        }
       },
     );
 
@@ -66,7 +127,32 @@ const TravelPage = () => {
   const handleAuthStateChange = (state: boolean) => {
     setIsAuthenticated(state);
     if (state) {
+      // Always close the auth form when authentication state changes to true
       setShowAuthForm(false);
+
+      // Get user data from localStorage if available
+      const userId = localStorage.getItem("userId");
+      const userRole = localStorage.getItem("userRole");
+      const userEmail = localStorage.getItem("userEmail");
+
+      // Store user data in localStorage for shared authentication
+      if (userId && userRole) {
+        const userData = {
+          id: userId,
+          role: userRole,
+          email: userEmail || "",
+        };
+        localStorage.setItem("auth_user", JSON.stringify(userData));
+      }
+
+      // Stay on the current page (TravelPage) after successful login
+      // No navigation needed as we're already on the TravelPage
+    } else {
+      // Remove user data from localStorage on logout
+      localStorage.removeItem("auth_user");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("userEmail");
     }
   };
 
@@ -118,17 +204,20 @@ const TravelPage = () => {
     }
   };
 
+  const [userName, setUserName] = useState<string | null>(null);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-800 to-green-600">
       {/* Header */}
       <header className="bg-green-800 text-white p-4">
         <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center space-x-4 w-full md:w-auto justify-between">
+            {/*
             <Button
               size="sm"
               variant="ghost"
               className="text-white hover:bg-green-800"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate("/")}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -147,6 +236,7 @@ const TravelPage = () => {
               </svg>
               <span className="ml-1">Back</span>
             </Button>
+            */}
             <div className="flex items-center space-x-2">
               <span className="text-xl font-bold">Travelintrips</span>
               <span className="text-xs">★</span>
@@ -276,14 +366,56 @@ const TravelPage = () => {
             </div>
 
             {isAuthenticated ? (
-              <Button
-                size="sm"
-                variant="outline"
-                className="bg-transparent text-white border-white hover:bg-green-800"
-                onClick={() => supabase.auth.signOut()}
-              >
-                Log Out
-              </Button>
+              <div className="flex items-center gap-2">
+                {(() => {
+                  // Get user data from localStorage
+                  const authUserStr = localStorage.getItem("auth_user");
+                  const authUser = authUserStr ? JSON.parse(authUserStr) : null;
+
+                  const userName =
+                    authUser?.name ||
+                    localStorage.getItem("userName") ||
+                    authUser?.email?.split("@")[0] ||
+                    "User";
+
+                  const userRole =
+                    authUser?.role ||
+                    localStorage.getItem("userRole") ||
+                    "User";
+
+                  console.log("userName:", userName);
+                  console.log("userRole:", userRole);
+
+                  return (
+                    <span className="text-white text-sm mr-2">
+                      {userName} ({userRole})
+                    </span>
+                  );
+                })()}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="bg-transparent text-white border-white hover:bg-green-800"
+                  onClick={() => {
+                    // Sign out from Supabase
+                    supabase.auth.signOut();
+
+                    // Clear localStorage data
+                    localStorage.removeItem("auth_user");
+                    localStorage.removeItem("userId");
+                    localStorage.removeItem("userRole");
+                    localStorage.removeItem("userEmail");
+
+                    // Update authentication state
+                    setIsAuthenticated(false);
+
+                    // Navigate to home page
+                    navigate("/");
+                  }}
+                >
+                  Log Out
+                </Button>
+              </div>
             ) : (
               <div className="flex space-x-2">
                 <Button
@@ -516,18 +648,15 @@ const TravelPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-xs md:text-sm text-gray-600 mb-1">
-                Departure date
+                Departure
               </label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal py-4 md:py-6 text-sm md:text-base",
-                      !departureDate && "text-muted-foreground",
-                    )}
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal pl-10 py-4 md:py-6 text-sm md:text-base"
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
                     {departureDate ? (
                       format(departureDate, "PPP")
                     ) : (
@@ -539,7 +668,7 @@ const TravelPage = () => {
                   <Calendar
                     mode="single"
                     selected={departureDate}
-                    onSelect={(date) => setDepartureDate(date as Date)}
+                    onSelect={setDepartureDate}
                     initialFocus
                   />
                 </PopoverContent>
@@ -549,18 +678,15 @@ const TravelPage = () => {
             {isRoundTrip && (
               <div>
                 <label className="block text-xs md:text-sm text-gray-600 mb-1">
-                  Return date
+                  Return
                 </label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full justify-start text-left font-normal py-4 md:py-6 text-sm md:text-base",
-                        !returnDate && "text-muted-foreground",
-                      )}
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal pl-10 py-4 md:py-6 text-sm md:text-base"
                     >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
                       {returnDate ? (
                         format(returnDate, "PPP")
                       ) : (
@@ -572,7 +698,7 @@ const TravelPage = () => {
                     <Calendar
                       mode="single"
                       selected={returnDate}
-                      onSelect={(date) => setReturnDate(date as Date)}
+                      onSelect={setReturnDate}
                       initialFocus
                     />
                   </PopoverContent>
@@ -589,10 +715,11 @@ const TravelPage = () => {
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
-                    variant={"outline"}
-                    className="w-full justify-start text-left font-normal py-4 md:py-6 text-sm md:text-base"
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal pl-10 py-4 md:py-6 text-sm md:text-base"
                   >
-                    <span>{passengers}</span>
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
+                    {passengers}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80 p-4">
@@ -602,11 +729,19 @@ const TravelPage = () => {
                       <div className="flex justify-between items-center">
                         <span>Adults</span>
                         <div className="flex items-center space-x-2">
-                          <Button size="sm" variant="outline">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
                             -
                           </Button>
-                          <span>1</span>
-                          <Button size="sm" variant="outline">
+                          <span className="w-8 text-center">1</span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
                             +
                           </Button>
                         </div>
@@ -614,11 +749,19 @@ const TravelPage = () => {
                       <div className="flex justify-between items-center">
                         <span>Children</span>
                         <div className="flex items-center space-x-2">
-                          <Button size="sm" variant="outline">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
                             -
                           </Button>
-                          <span>0</span>
-                          <Button size="sm" variant="outline">
+                          <span className="w-8 text-center">0</span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
                             +
                           </Button>
                         </div>
@@ -626,11 +769,19 @@ const TravelPage = () => {
                       <div className="flex justify-between items-center">
                         <span>Infants</span>
                         <div className="flex items-center space-x-2">
-                          <Button size="sm" variant="outline">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
                             -
                           </Button>
-                          <span>0</span>
-                          <Button size="sm" variant="outline">
+                          <span className="w-8 text-center">0</span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
                             +
                           </Button>
                         </div>
@@ -649,10 +800,13 @@ const TravelPage = () => {
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
-                    variant={"outline"}
-                    className="w-full justify-start text-left font-normal py-4 md:py-6 text-sm md:text-base"
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal pl-10 py-4 md:py-6 text-sm md:text-base"
                   >
-                    <span>{travelClass}</span>
+                    <Badge className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-gray-400 p-0 flex items-center justify-center">
+                      <span className="text-[10px]">C</span>
+                    </Badge>
+                    {travelClass}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-56 p-4">
@@ -694,108 +848,22 @@ const TravelPage = () => {
             </div>
           </div>
 
-          <div className="flex justify-center md:justify-end">
-            <Button
-              className="bg-orange-500 hover:bg-orange-600 text-white px-6 md:px-8 py-4 md:py-6 w-full md:w-auto"
-              onClick={handleSearch}
-            >
-              <Search className="h-4 w-4 md:h-5 md:w-5 mr-2" />
-              Search
-            </Button>
-          </div>
-        </div>
-
-        {/* Promotions Section */}
-        <div className="container mx-auto px-4 py-6 md:py-8 bg-white rounded-t-3xl mt-6 md:mt-8">
-          <div className="flex items-center mb-4">
-            <div className="text-green-600 mr-2">🎁</div>
-            <h2 className="text-base md:text-lg font-bold text-green-900">
-              8% New User Coupons
-            </h2>
-          </div>
-          <p className="text-xs md:text-sm text-gray-600 mb-4">
-            Valid for First Transaction on Travelintrips App
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <Card className="p-4 border border-gray-200 rounded-lg">
-              <div className="flex justify-between items-start">
-                <div>
-                  <Badge className="bg-green-100 text-green-800 mb-2 text-xs">
-                    Diskon 8% Hotel
-                  </Badge>
-                  <p className="text-xs text-gray-500">
-                    min. transaksi Rp 500rb
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-green-500 border-green-500 text-xs"
-                >
-                  Copy
-                </Button>
-              </div>
-              <div className="mt-4 flex items-center">
-                <span className="text-xs font-bold">JALANYUK</span>
-              </div>
-            </Card>
-
-            <Card className="p-4 border border-gray-200 rounded-lg">
-              <div className="flex justify-between items-start">
-                <div>
-                  <Badge className="bg-red-100 text-red-800 mb-2 text-xs">
-                    Diskon s.d 8% Xperience
-                  </Badge>
-                  <p className="text-xs text-gray-500">
-                    min. transaksi Rp 300rb
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-green-500 border-green-500 text-xs"
-                >
-                  Copy
-                </Button>
-              </div>
-              <div className="mt-4 flex items-center">
-                <span className="text-xs font-bold">JALANYUK</span>
-              </div>
-            </Card>
-
-            <Card className="p-4 border border-gray-200 rounded-lg sm:col-span-2 md:col-span-1">
-              <div className="flex justify-between items-start">
-                <div>
-                  <Badge className="bg-green-100 text-green-800 mb-2 text-xs">
-                    Diskon 12% Antar Jemput Bandara
-                  </Badge>
-                  <p className="text-xs text-gray-500">
-                    min. transaksi Rp 150rb
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-green-500 border-green-500 text-xs"
-                >
-                  Copy
-                </Button>
-              </div>
-              <div className="mt-4 flex items-center">
-                <span className="text-xs font-bold">JALANYUK</span>
-              </div>
-            </Card>
-          </div>
+          <Button
+            className="w-full bg-green-500 hover:bg-green-600 text-white py-4 md:py-6 text-base md:text-lg"
+            onClick={handleSearch}
+          >
+            <Search className="mr-2 h-4 w-4 md:h-5 md:w-5" />
+            Search Flights
+          </Button>
         </div>
       </div>
 
-      {/* Auth Form Modal */}
+      {/* Auth Form */}
       {showAuthForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-4 md:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl md:text-2xl font-bold">
+          <Card className="w-full max-w-md">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h2 className="text-xl font-bold">
                 {authFormType === "login" ? "Log In" : "Register"}
               </h2>
               <Button
@@ -820,12 +888,14 @@ const TravelPage = () => {
                 </svg>
               </Button>
             </div>
-            <AuthForm
-              onAuthStateChange={handleAuthStateChange}
-              initialTab={authFormType}
-              onClose={() => setShowAuthForm(false)}
-            />
-          </div>
+            <div className="p-4">
+              <AuthForm
+                initialTab={authFormType}
+                onAuthStateChange={handleAuthStateChange}
+                onClose={() => setShowAuthForm(false)}
+              />
+            </div>
+          </Card>
         </div>
       )}
     </div>

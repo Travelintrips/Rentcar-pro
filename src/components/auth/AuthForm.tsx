@@ -64,6 +64,36 @@ const AuthForm: React.FC<AuthFormProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Check if user is already authenticated when component mounts
+  useEffect(() => {
+    // Check if user is already authenticated from localStorage
+    const authUserStr = localStorage.getItem("auth_user");
+    if (authUserStr) {
+      try {
+        const authUser = JSON.parse(authUserStr);
+        console.log("Found auth user in localStorage:", authUser);
+        if (authUser && authUser.id) {
+          // User is already authenticated, no need to show auth form
+          console.log("User already authenticated, hiding auth form");
+          // Force close any open auth forms
+          if (onClose) {
+            console.log(
+              "Forcing close of auth form for already authenticated user",
+            );
+            onClose();
+          }
+          // Update auth state
+          if (onAuthStateChange) {
+            onAuthStateChange(true);
+          }
+          return; // Exit early if user is authenticated
+        }
+      } catch (e) {
+        console.error("Error parsing auth_user from localStorage:", e);
+      }
+    }
+  }, [onClose, onAuthStateChange]);
+
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -80,6 +110,8 @@ const AuthForm: React.FC<AuthFormProps> = ({
     setIsSubmitting(true);
 
     try {
+      console.log("Login submission started with email:", data.email);
+
       const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
@@ -88,6 +120,7 @@ const AuthForm: React.FC<AuthFormProps> = ({
       if (error) {
         console.error("Login error:", error);
         setLoginError(error.message);
+        // Reopen the form if there's an error
         return;
       }
 
@@ -118,20 +151,34 @@ const AuthForm: React.FC<AuthFormProps> = ({
       // Store user role in local storage
       localStorage.setItem("userRole", userRole);
       localStorage.setItem("userId", authData.user.id);
-
-      console.log("User logged in with role:", userRole);
-
-      // No longer redirecting to specific URL after login
-      console.log("User logged in successfully");
-
-      onLogin(data);
-      // Update authentication state after successful login
-      if (onAuthStateChange) {
-        onAuthStateChange(true);
+      if (authData.user.email) {
+        localStorage.setItem("userEmail", authData.user.email);
       }
 
-      // Close the form after successful login
+      // Store auth data in localStorage for shared authentication
+      const userData = {
+        id: authData.user.id,
+        role: userRole,
+        email: authData.user.email || "",
+      };
+      localStorage.setItem("auth_user", JSON.stringify(userData));
+
+      console.log("User logged in with role:", userRole);
+      console.log("User logged in successfully with ID:", authData.user.id);
+
+      onLogin(data);
+
+      // Update authentication state after successful login
+      if (onAuthStateChange) {
+        console.log("Updating auth state to true");
+        onAuthStateChange(true);
+      } else {
+        console.log("No onAuthStateChange handler provided");
+      }
+
+      // Always close the form after successful login
       if (onClose) {
+        console.log("Closing auth form after successful login");
         onClose();
       }
     } catch (error) {
@@ -160,6 +207,11 @@ const AuthForm: React.FC<AuthFormProps> = ({
       if (signUpError) {
         console.error("Registration error:", signUpError);
         throw signUpError;
+      }
+
+      if (onClose) {
+        console.log("Closing auth form after register");
+        onClose();
       }
 
       // Add a small delay to allow the database trigger to complete
@@ -542,6 +594,17 @@ const AuthForm: React.FC<AuthFormProps> = ({
         // Store user role in local storage regardless of insert/update result
         localStorage.setItem("userRole", data.role);
         localStorage.setItem("userId", authData.user.id);
+        if (authData.user.email) {
+          localStorage.setItem("userEmail", authData.user.email);
+        }
+
+        // Store auth data in localStorage for shared authentication
+        const userData = {
+          id: authData.user.id,
+          role: data.role,
+          email: authData.user.email || "",
+        };
+        localStorage.setItem("auth_user", JSON.stringify(userData));
 
         // Log success message
         console.log(
@@ -552,14 +615,25 @@ const AuthForm: React.FC<AuthFormProps> = ({
       await onRegister(data);
       // Update authentication state after successful registration
       if (onAuthStateChange) {
+        console.log("Updating auth state to true after registration");
         onAuthStateChange(true);
+      } else {
+        console.log("No onAuthStateChange handler provided for registration");
       }
 
-      // No longer redirecting to specific URL after registration
-      console.log("User registered successfully");
+      // Check if the user is a driver and redirect to driver profile
+      if (data.role === "Driver Mitra" || data.role === "Driver Perusahaan") {
+        console.log(
+          "Driver registered successfully, redirecting to driver profile",
+        );
+        navigate("/driver-profile");
+      } else {
+        console.log("User registered successfully");
+      }
 
-      // Close the form after successful registration
+      // Always close the form after successful registration
       if (onClose) {
+        console.log("Closing auth form after successful registration");
         onClose();
       }
     } catch (error) {

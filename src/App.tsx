@@ -29,6 +29,9 @@ import ChecklistManagement from "./components/admin/ChecklistManagement";
 import DamageManagement from "./components/admin/DamageManagement";
 import VehicleInventory from "./components/admin/VehicleInventory";
 import AirportTransferPage from "./pages/AirportTransferPage";
+import DriverMitraPage from "./pages/DriverMitraPage";
+import DriverPerusahaanPage from "./pages/DriverPerusahaanPage";
+import DriverProfile from "./components/DriverProfile";
 import { useAuth } from "./hooks/useAuth";
 
 // Define window.__TEMPO_ROUTES__ to avoid undefined errors
@@ -45,9 +48,11 @@ function App() {
   const ProtectedRoute = ({
     children,
     requiredRole,
+    allowedRoles,
   }: {
     children: JSX.Element;
     requiredRole?: string;
+    allowedRoles?: string[];
   }) => {
     if (isLoading) {
       return <div>Loading...</div>;
@@ -57,9 +62,18 @@ function App() {
       return <Navigate to="/" />;
     }
 
+    // Check if user has the specific required role
     if (requiredRole && userRole !== requiredRole) {
       console.log(
         `Access denied: User role ${userRole} does not match required role ${requiredRole}`,
+      );
+      return <Navigate to="/" />;
+    }
+
+    // Check if user has one of the allowed roles
+    if (allowedRoles && !allowedRoles.includes(userRole || "")) {
+      console.log(
+        `Access denied: User role ${userRole} is not in allowed roles [${allowedRoles.join(", ")}]`,
       );
       return <Navigate to="/" />;
     }
@@ -80,6 +94,7 @@ function App() {
         {import.meta.env.VITE_TEMPO ? (
           <>
             {/* Use tempo-routes for storyboards */}
+            {useRoutes(routes)}
 
             <Routes>
               {/* Payment Routes - Define these first for higher priority */}
@@ -110,10 +125,16 @@ function App() {
                 path="/airport-transfer"
                 element={<AirportTransferPage />}
               />
+              <Route path="/driver-mitra" element={<DriverMitraPage />} />
               <Route
-                path="/admin"
+                path="/driver-perusahaan"
+                element={<DriverPerusahaanPage />}
+              />
+              <Route path="/driver-profile" element={<DriverProfile />} />
+              <Route
+                path="/admin/*"
                 element={
-                  <ProtectedRoute requiredRole="Admin">
+                  <ProtectedRoute allowedRoles={["Admin", "Staff"]}>
                     <AdminLayout />
                   </ProtectedRoute>
                 }
@@ -161,11 +182,17 @@ function App() {
               element={<BookingPage />}
             />
             <Route path="/airport-transfer" element={<AirportTransferPage />} />
+            <Route path="/driver-mitra" element={<DriverMitraPage />} />
+            <Route
+              path="/driver-perusahaan"
+              element={<DriverPerusahaanPage />}
+            />
+            <Route path="/driver-profile" element={<DriverProfile />} />
 
             <Route
-              path="/admin"
+              path="/admin/*"
               element={
-                <ProtectedRoute requiredRole="Admin">
+                <ProtectedRoute allowedRoles={["Admin", "Staff"]}>
                   <AdminLayout />
                 </ProtectedRoute>
               }
