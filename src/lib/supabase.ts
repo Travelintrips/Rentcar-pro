@@ -1,22 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
 
-// Get environment variables with fallbacks
-const supabaseUrl =
-  import.meta.env.VITE_SUPABASE_URL ||
-  "https://placeholder-project.supabase.co";
-const supabaseAnonKey =
-  import.meta.env.VITE_SUPABASE_ANON_KEY || "placeholder-key";
-
-// Validate URL format before using it
-function isValidUrl(string: string): boolean {
-  try {
-    new URL(string);
-    return true;
-  } catch (_) {
-    return false;
-  }
-}
 
 const hasValidCredentials =
   supabaseUrl &&
